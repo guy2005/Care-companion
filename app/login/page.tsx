@@ -27,6 +27,7 @@ function LoginForm() {
     setIsLoading(true);
     setErrorMessage('');
     try {
+      localStorage.setItem('care_companion_active_role', selectedRole);
       await signInWithGoogle();
     } catch (err: any) {
       setErrorMessage(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Google');

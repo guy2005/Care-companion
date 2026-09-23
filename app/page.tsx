@@ -29,7 +29,7 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
 
-  const featuredCompanions = companions.slice(0, 3);
+  const featuredCompanions = companions.filter((c) => c.is_verified).slice(0, 3);
 
   const handleQuickSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +65,7 @@ export default function HomePage() {
 
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
               ไปทำธุระได้อย่างมั่นใจ <br />
-              มี <span className="text-blue-600 underline decoration-blue-300 decoration-wavy">Care Companion</span> ร่วมเดินทางเคียงข้าง
+              มี <span className="text-blue-600">Care Companion</span> ร่วมเดินทางเคียงข้าง
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
@@ -239,7 +239,7 @@ export default function HomePage() {
             href="/companions"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition"
           >
-            <span>ดูผู้ช่วยทั้งหมด ({companions.length} ท่าน)</span>
+            <span>ดูผู้ช่วยทั้งหมด ({companions.filter((c) => c.is_verified).length} ท่าน)</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

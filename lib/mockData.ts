@@ -2,91 +2,112 @@ import { Profile, CompanionProfile, ServiceCategory, Booking, Review } from './t
 
 export const INITIAL_CATEGORIES: ServiceCategory[] = [
   {
-    id: 'cat-1',
+    id: 'a1111111-1111-1111-1111-111111111111',
     name: 'ไปพบแพทย์ / โรงพยาบาล',
     description: 'ช่วยพาไปตามนัดแพทย์ ช่วยประสานงานรอคิว รับยา และเดินทางไป-กลับอย่างปลอดภัย',
     icon: 'Stethoscope',
   },
   {
-    id: 'cat-2',
+    id: 'b2222222-2222-2222-2222-222222222222',
     name: 'ติดต่อธนาคาร / หน่วยงานราชการ',
     description: 'ช่วยนำทาง รอคิว และอำนวยความสะดวกในการทำธุรกรรมหรือติดต่อเอกสารสำคัญ',
     icon: 'Building2',
   },
   {
-    id: 'cat-3',
+    id: 'c3333333-3333-3333-3333-333333333333',
     name: 'ซื้อสินค้า / ซูเปอร์มาร์เก็ต',
     description: 'ช่วยถือของ เลือกซื้อสินค้าตามรายการ พาเดินช้อปปิ้งอย่างสบายใจ',
     icon: 'ShoppingBag',
   },
   {
-    id: 'cat-4',
+    id: 'd4444444-4444-4444-4444-444444444444',
     name: 'ทำธุระทั่วไป / เดินทางนอกบ้าน',
     description: 'ช่วยร่วมเดินทางไปทำธุระส่วนตัว ทานข้าวนอกบ้าน หรือร่วมกิจกรรมเบาๆ',
     icon: 'Compass',
   },
 ];
 
+const customerProfile: Profile = {
+  id: '55555555-5555-5555-5555-555555555555',
+  email: 'somchai.care@gmail.com',
+  full_name: 'คุณสมชาย ใจดี',
+  phone: '081-234-5678',
+  avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&h=256&q=80',
+  role: 'customer',
+  created_at: '2026-08-01T08:00:00Z',
+};
+
+const preeyaProfile: Profile = {
+  id: '11111111-1111-1111-1111-111111111111',
+  email: 'preeya.companion@gmail.com',
+  full_name: 'คุณปรียา รักดูแล (ครูปรียา)',
+  phone: '089-876-5432',
+  avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&h=256&q=80',
+  role: 'companion',
+  created_at: '2026-07-15T09:30:00Z',
+};
+
+const thanakornProfile: Profile = {
+  id: '22222222-2222-2222-2222-222222222222',
+  email: 'thanakorn.companion@gmail.com',
+  full_name: 'คุณธนกร ร่วมทาง (พี่กร)',
+  phone: '086-555-1234',
+  avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&h=256&q=80',
+  role: 'companion',
+  created_at: '2026-07-20T10:00:00Z',
+};
+
+const naphaProfile: Profile = {
+  id: '33333333-3333-3333-3333-333333333333',
+  email: 'napha.care@gmail.com',
+  full_name: 'คุณนภา แสนสุข (พี่นภา)',
+  phone: '082-999-4321',
+  avatar_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&h=256&q=80',
+  role: 'companion',
+  created_at: '2026-08-10T14:00:00Z',
+};
+
+const worawitProfile: Profile = {
+  id: '44444444-4444-4444-4444-444444444444',
+  email: 'worawit.care@gmail.com',
+  full_name: 'คุณวรวิทย์ มิตรแท้',
+  phone: '084-111-2233',
+  avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&h=256&q=80',
+  role: 'companion',
+  created_at: '2026-09-01T11:00:00Z',
+};
+
+const adminProfile: Profile = {
+  id: '99999999-9999-9999-9999-999999999999',
+  email: 'admin.carecompanion@platform.th',
+  full_name: 'แอดมินระบบ (Care Admin)',
+  phone: '02-999-8888',
+  avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&h=256&q=80',
+  role: 'admin',
+  created_at: '2026-01-01T00:00:00Z',
+};
+
 export const INITIAL_PROFILES: Record<string, Profile> = {
-  'user-customer-1': {
-    id: 'user-customer-1',
-    email: 'somchai.care@gmail.com',
-    full_name: 'คุณสมชาย ใจดี',
-    phone: '081-234-5678',
-    avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&h=256&q=80',
-    role: 'customer',
-    created_at: '2026-08-01T08:00:00Z',
-  },
-  'user-companion-1': {
-    id: 'user-companion-1',
-    email: 'preeya.companion@gmail.com',
-    full_name: 'คุณปรียา รักดูแล (ครูปรียา)',
-    phone: '089-876-5432',
-    avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&h=256&q=80',
-    role: 'companion',
-    created_at: '2026-07-15T09:30:00Z',
-  },
-  'user-companion-2': {
-    id: 'user-companion-2',
-    email: 'thanakorn.companion@gmail.com',
-    full_name: 'คุณธนกร ร่วมทาง (พี่กร)',
-    phone: '086-555-1234',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&h=256&q=80',
-    role: 'companion',
-    created_at: '2026-07-20T10:00:00Z',
-  },
-  'user-companion-3': {
-    id: 'user-companion-3',
-    email: 'napha.care@gmail.com',
-    full_name: 'คุณนภา แสนสุข (พี่นภา)',
-    phone: '082-999-4321',
-    avatar_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&h=256&q=80',
-    role: 'companion',
-    created_at: '2026-08-10T14:00:00Z',
-  },
-  'user-companion-4': {
-    id: 'user-companion-4',
-    email: 'worawit.care@gmail.com',
-    full_name: 'คุณวรวิทย์ มิตรแท้',
-    phone: '084-111-2233',
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&h=256&q=80',
-    role: 'companion',
-    created_at: '2026-09-01T11:00:00Z',
-  },
-  'user-admin-1': {
-    id: 'user-admin-1',
-    email: 'admin.carecompanion@platform.th',
-    full_name: 'แอดมินระบบ (Care Admin)',
-    phone: '02-999-8888',
-    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&h=256&q=80',
-    role: 'admin',
-    created_at: '2026-01-01T00:00:00Z',
-  },
+  // Key based mapping
+  'user-customer-1': customerProfile,
+  'user-companion-1': preeyaProfile,
+  'user-companion-2': thanakornProfile,
+  'user-companion-3': naphaProfile,
+  'user-companion-4': worawitProfile,
+  'user-admin-1': adminProfile,
+
+  // UUID based mapping
+  '55555555-5555-5555-5555-555555555555': customerProfile,
+  '11111111-1111-1111-1111-111111111111': preeyaProfile,
+  '22222222-2222-2222-2222-222222222222': thanakornProfile,
+  '33333333-3333-3333-3333-333333333333': naphaProfile,
+  '44444444-4444-4444-4444-444444444444': worawitProfile,
+  '99999999-9999-9999-9999-999999999999': adminProfile,
 };
 
 export const INITIAL_COMPANIONS: CompanionProfile[] = [
   {
-    id: 'user-companion-1',
+    id: '11111111-1111-1111-1111-111111111111',
     bio: 'อดีตเจ้าหน้าที่ประชาสัมพันธ์โรงพยาบาล มีความใจเย็น สุภาพ ช่วยพยุงและเข็นรถเข็นได้คล่องแคล่ว คุ้นเคยกับแผนกและการติดต่อในโรงพยาบาลศิริราช จุฬาฯ และรามาธิบดี',
     experience_years: 4,
     skills: ['เข็นรถเข็นผู้สูงอายุ', 'คุ้นเคยระบบโรงพยาบาล', 'ปฐมพยาบาลเบื้องต้น CPR', 'สื่อสารภาษาอังกฤษเบื้องต้น'],
@@ -98,7 +119,7 @@ export const INITIAL_COMPANIONS: CompanionProfile[] = [
     rating_count: 28,
   },
   {
-    id: 'user-companion-2',
+    id: '22222222-2222-2222-2222-222222222222',
     bio: 'มีรถยนต์ส่วนตัวพร้อมใบขับขี่ถูกต้อง สะอาดปลอดภัย ช่วยยกสัมภาระหนักได้ ช่วยนำทางและพาติดต่อธนาคาร สำนักงานเขต สำนักงานที่ดิน อย่างคล่องแคล่วและตรงต่อเวลา',
     experience_years: 3,
     skills: ['มีรถยนต์ส่วนตัว', 'ช่วยยกของหนัก', 'เชี่ยวชาญการติดต่อหน่วยงานราชการ', 'ขับรถสุภาพ ปลอดภัย'],
@@ -110,7 +131,7 @@ export const INITIAL_COMPANIONS: CompanionProfile[] = [
     rating_count: 34,
   },
   {
-    id: 'user-companion-3',
+    id: '33333333-3333-3333-3333-333333333333',
     bio: 'ถนัดการพาผู้สูงอายุไปซื้อของที่ตลาดสดและซูเปอร์มาร์เก็ต ช่วยเช็ครายการสินค้า ตรวจวันหมดอายุ และดูแลเรื่องการใช้จ่ายอย่างละเอียดซื่อสัตย์ อารมณ์ดี ชวนคุยไม่เหงา',
     experience_years: 2,
     skills: ['ช่วยเลือกซื้อสินค้า', 'ช่วยจัดแจงสัมภาระ', 'ดูแลผู้สูงอายุอย่างใส่ใจ', 'ถ่ายภาพรายงานญาติ'],
@@ -122,7 +143,7 @@ export const INITIAL_COMPANIONS: CompanionProfile[] = [
     rating_count: 15,
   },
   {
-    id: 'user-companion-4',
+    id: '44444444-4444-4444-4444-444444444444',
     bio: 'ผู้ช่วยรุ่นใหม่ อารมณ์ดี พร้อมช่วยเหลือการเดินทางด้วยรถไฟฟ้า BTS / MRT และพาทำธุระทั่วไป เอกสารตรวจประวัติอยู่ระหว่างการตรวจสอบโดยแอดมิน',
     experience_years: 1,
     skills: ['นำทางรถไฟฟ้า BTS/MRT', 'ช่วยใช้งานสมาร์ทโฟน/แอปพลิเคชัน', 'พาเดินออกกำลังกาย'],
@@ -137,10 +158,10 @@ export const INITIAL_COMPANIONS: CompanionProfile[] = [
 
 export const INITIAL_BOOKINGS: Booking[] = [
   {
-    id: 'book-1',
-    customer_id: 'user-customer-1',
-    companion_id: 'user-companion-1',
-    service_category_id: 'cat-1',
+    id: 'b1111111-1111-1111-1111-111111111111',
+    customer_id: '55555555-5555-5555-5555-555555555555',
+    companion_id: '11111111-1111-1111-1111-111111111111',
+    service_category_id: 'a1111111-1111-1111-1111-111111111111',
     title: 'พาคุณแม่ไปพบแพทย์ตามนัด คลินิกตา',
     description: 'ต้องการผู้ช่วยพาไปตรวจตาตามนัด คุณแม่เดินช้าและต้องหยอดยาขยายม่านตา',
     origin_location: 'คอนโดลุมพินี พหลโยธิน 24',
@@ -154,10 +175,10 @@ export const INITIAL_BOOKINGS: Booking[] = [
     created_at: '2026-09-18T10:00:00Z',
   },
   {
-    id: 'book-2',
-    customer_id: 'user-customer-1',
-    companion_id: 'user-companion-2',
-    service_category_id: 'cat-2',
+    id: 'b2222222-2222-2222-2222-222222222222',
+    customer_id: '55555555-5555-5555-5555-555555555555',
+    companion_id: '22222222-2222-2222-2222-222222222222',
+    service_category_id: 'b2222222-2222-2222-2222-222222222222',
     title: 'ไปติดต่อรับเงินบำนาญและอัปเดตสมุดบัญชี',
     description: 'ไปธนาคารกรุงไทย สาขาสยามพารากอน และทำบัตรประชาชนใหม่ที่จุดบริการเขต',
     origin_location: 'ซอยสุขุมวิท 39',
@@ -171,10 +192,10 @@ export const INITIAL_BOOKINGS: Booking[] = [
     created_at: '2026-09-17T14:30:00Z',
   },
   {
-    id: 'book-3',
-    customer_id: 'user-customer-1',
-    companion_id: 'user-companion-3',
-    service_category_id: 'cat-3',
+    id: 'b3333333-3333-3333-3333-333333333333',
+    customer_id: '55555555-5555-5555-5555-555555555555',
+    companion_id: '33333333-3333-3333-3333-333333333333',
+    service_category_id: 'c3333333-3333-3333-3333-333333333333',
     title: 'ซื้อของใช้เข้าบ้านที่โลตัสพระราม 4',
     description: 'ซื้อของใช้จำเป็น ข้าวสาร นม น้ำยาทำความสะอาด',
     origin_location: 'ซอยสุขุมวิท 22',
@@ -188,10 +209,10 @@ export const INITIAL_BOOKINGS: Booking[] = [
     created_at: '2026-09-14T09:00:00Z',
   },
   {
-    id: 'book-4',
-    customer_id: 'user-customer-1',
+    id: 'b4444444-4444-4444-4444-444444444444',
+    customer_id: '55555555-5555-5555-5555-555555555555',
     companion_id: null,
-    service_category_id: 'cat-1',
+    service_category_id: 'a1111111-1111-1111-1111-111111111111',
     title: 'หาผู้ช่วยร่วมเดินทางไปตรวจสุขภาพประจำปี',
     description: 'ต้องการผู้ช่วยพาไปตรวจเลือดและเอกซเรย์ที่ รพ.ศิริราช ปิยมหาราชการุณย์',
     origin_location: 'ถนนจรัญสนิทวงศ์ ซอย 42',
@@ -208,21 +229,39 @@ export const INITIAL_BOOKINGS: Booking[] = [
 
 export const INITIAL_REVIEWS: Review[] = [
   {
-    id: 'rev-1',
-    booking_id: 'book-3',
-    customer_id: 'user-customer-1',
-    companion_id: 'user-companion-3',
+    id: '11111111-2222-3333-4444-555555555551',
+    booking_id: 'b1111111-1111-1111-1111-111111111111',
+    customer_id: '55555555-5555-5555-5555-555555555555',
+    companion_id: '11111111-1111-1111-1111-111111111111',
+    rating: 5,
+    comment: 'ครูปรียามืออาชีพมาก รู้จักทางในโรงพยาบาลเป็นอย่างดี พาไปตรวจตามคิวไม่มีสะดุด คุณแม่ประทับใจมากค่ะ',
+    created_at: '2026-09-18T12:30:00Z',
+  },
+  {
+    id: '11111111-2222-3333-4444-555555555552',
+    booking_id: 'b2222222-2222-2222-2222-222222222222',
+    customer_id: '55555555-5555-5555-5555-555555555555',
+    companion_id: '22222222-2222-2222-2222-222222222222',
+    rating: 5,
+    comment: 'พี่กรขับรถสุภาพมาก ช่วยพาไปติดต่อสำนักงานเขตและธนาคารอย่างคล่องแคล่ว สะอาด ปลอดภัย แนะนำเลยครับ',
+    created_at: '2026-09-17T16:00:00Z',
+  },
+  {
+    id: '11111111-2222-3333-4444-555555555553',
+    booking_id: 'b3333333-3333-3333-3333-333333333333',
+    customer_id: '55555555-5555-5555-5555-555555555555',
+    companion_id: '33333333-3333-3333-3333-333333333333',
     rating: 5,
     comment: 'คุณนภาดูแลดีมากๆ ค่ะ ตรงต่อเวลา ช่วยเลือกซื้อของและถือของขึ้นห้องให้อย่างสุภาพ แนะนำเลยค่ะ!',
     created_at: '2026-09-15T13:00:00Z',
   },
   {
-    id: 'rev-2',
-    booking_id: 'book-old-1',
-    customer_id: 'user-customer-1',
-    companion_id: 'user-companion-1',
+    id: '11111111-2222-3333-4444-555555555554',
+    booking_id: 'b4444444-4444-4444-4444-444444444444',
+    customer_id: '55555555-5555-5555-5555-555555555555',
+    companion_id: '44444444-4444-4444-4444-444444444444',
     rating: 5,
-    comment: 'ครูปรียามืออาชีพมาก รู้จักทางในโรงพยาบาลเป็นอย่างดี พาไปตรวจตามคิวไม่มีสะดุด คุณแม่ประทับใจมาก',
-    created_at: '2026-08-20T16:00:00Z',
+    comment: 'คุณวรวิทย์สุภาพ ตรงเวลา ชวนคุยสนุก ช่วยพาขึ้น BTS ได้อย่างสะดวกสบายและปลอดภัยครับ',
+    created_at: '2026-09-10T10:30:00Z',
   },
 ];

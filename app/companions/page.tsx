@@ -52,8 +52,8 @@ function CompanionsList() {
           return false;
         }
 
-        // Verified only
-        if (verifiedOnly && !c.is_verified) {
+        // Must be verified by admin to be visible to customers
+        if (!c.is_verified) {
           return false;
         }
 

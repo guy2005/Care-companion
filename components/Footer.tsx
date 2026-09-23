@@ -1,8 +1,21 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useApp } from '@/lib/context/AppContext';
+import { UserRole } from '@/lib/types';
 import { HeartHandshake, ShieldAlert, Heart, Phone, Mail, MapPin } from 'lucide-react';
 
 export default function Footer() {
+  const router = useRouter();
+  const { switchRole } = useApp();
+
+  const handleRoleNavigate = async (targetRole: UserRole, path: string) => {
+    await switchRole(targetRole);
+    router.push(path);
+  };
+
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
       {/* Essential Medical Disclaimer required by assignment */}
@@ -45,10 +58,38 @@ export default function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">เข้าสู่ส่วนการทำงาน</h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li><Link href="/customer/dashboard" className="hover:text-blue-400 transition">👤 สำหรับลูกค้า (Customer)</Link></li>
-              <li><Link href="/companion/dashboard" className="hover:text-emerald-400 transition">🤝 สำหรับผู้ร่วมเดินทาง (Companion)</Link></li>
-              <li><Link href="/admin/dashboard" className="hover:text-purple-400 transition">🛡️ สำหรับผู้ดูแลระบบ (Admin)</Link></li>
-              <li><Link href="/login" className="hover:text-white transition">เข้าสู่ระบบด้วย Google</Link></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleRoleNavigate('customer', '/customer/dashboard')}
+                  className="hover:text-blue-400 transition text-left cursor-pointer flex items-center gap-1.5"
+                >
+                  👤 สำหรับลูกค้า (Customer)
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleRoleNavigate('companion', '/companion/dashboard')}
+                  className="hover:text-emerald-400 transition text-left cursor-pointer flex items-center gap-1.5"
+                >
+                  🤝 สำหรับผู้ร่วมเดินทาง (Companion)
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleRoleNavigate('admin', '/admin/dashboard')}
+                  className="hover:text-purple-400 transition text-left cursor-pointer flex items-center gap-1.5"
+                >
+                  🛡️ สำหรับผู้ดูแลระบบ (Admin)
+                </button>
+              </li>
+              <li>
+                <Link href="/login" className="hover:text-white transition flex items-center gap-1.5">
+                  เข้าสู่ระบบด้วย Google
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -17,7 +17,10 @@ import {
   ShieldAlert, 
   Award,
   Heart,
-  MessageSquare
+  MessageSquare,
+  Phone,
+  Ban,
+  AlertCircle
 } from 'lucide-react';
 
 interface PageProps {
@@ -27,11 +30,12 @@ interface PageProps {
 export default function CompanionDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const { companions, reviews } = useApp();
+  const { currentUser, companions, reviews, allProfiles } = useApp();
 
   const companion = companions.find((c) => c.id === resolvedParams.id);
-  const profile = companion?.profile || INITIAL_PROFILES[resolvedParams.id];
+  const profile = allProfiles.find((p) => p.id === resolvedParams.id) || companion?.profile || INITIAL_PROFILES[resolvedParams.id];
   const companionReviews = reviews.filter((r) => r.companion_id === resolvedParams.id);
+  const isSelf = Boolean(currentUser && currentUser.id === resolvedParams.id);
 
   if (!companion || !profile) {
     return (
@@ -93,6 +97,11 @@ export default function CompanionDetailPage({ params }: PageProps) {
               <div className="space-y-2 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-black text-slate-900">{profile.full_name}</h1>
+                  {isSelf && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                      👤 บัญชีโปรไฟล์ของคุณ
+                    </span>
+                  )}
                   {companion.is_verified ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                       <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
@@ -121,6 +130,24 @@ export default function CompanionDetailPage({ params }: PageProps) {
                     <Award className="w-3.5 h-3.5 text-blue-600" />
                     <span>ผู้ร่วมเดินทางมาตรฐาน</span>
                   </div>
+                </div>
+
+                {/* Phone contact */}
+                <div className="pt-1">
+                  {profile.phone ? (
+                    <a
+                      href={`tel:${profile.phone}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>เบอร์ติดต่อ: {profile.phone}</span>
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 text-slate-500 text-xs font-medium border border-slate-200">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <span>ยังไม่ได้ระบุเบอร์ติดต่อ</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -258,15 +285,55 @@ export default function CompanionDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="pt-2">
-              <Link
-                href={`/bookings/new?companion_id=${companion.id}`}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-lg shadow-blue-600/25"
-              >
-                <Calendar className="w-4 h-4" />
-                <span>จองผู้ช่วยท่านนี้</span>
-              </Link>
-            </div>
+            {isSelf ? (
+              <div className="pt-2 space-y-3">
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>ไม่สามารถจ้างตัวเองได้</span>
+                  </div>
+                  <p className="text-[11px] text-amber-700 leading-relaxed">
+                    นี่คือโปรไฟล์ผู้ร่วมเดินทางของคุณเอง ระบบไม่อนุญาตให้ผู้ว่าจ้างเลือกหรือสร้างคำขอนัดหมายเพื่อจ้างตัวเอง
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  disabled
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed text-xs"
+                >
+                  <Ban className="w-4 h-4 text-slate-400" />
+                  <span>ไม่สามารถจ้างตัวเองได้ (บัญชีของคุณ)</span>
+                </button>
+
+                <Link
+                  href="/companion/profile"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition text-xs"
+                >
+                  <span>แก้ไขข้อมูลโปรไฟล์ผู้ช่วยนี้</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="pt-2 space-y-2.5">
+                <Link
+                  href={`/bookings/new?companion_id=${companion.id}`}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-lg shadow-blue-600/25"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>จองผู้ช่วยท่านนี้</span>
+                </Link>
+
+                {profile.phone && (
+                  <a
+                    href={`tel:${profile.phone}`}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition text-xs shadow-2xs"
+                  >
+                    <Phone className="w-4 h-4 text-emerald-600" />
+                    <span>โทรสอบถามผู้ช่วย: {profile.phone}</span>
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Platform Reassurance */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2 text-[11px] text-slate-600">

@@ -3,18 +3,34 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context/AppContext';
-import { HeartHandshake, User, Users, CheckCircle2, ArrowRight } from 'lucide-react';
+import { HeartHandshake, User, Users, CheckCircle2, ArrowRight, AlertCircle, Phone } from 'lucide-react';
 import { UserRole } from '@/lib/types';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/formatters';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { currentUser, loginAsDemo } = useApp();
+  const { currentUser, loginAsDemo, updateUserProfile } = useApp();
   const [selectedRole, setSelectedRole] = useState<UserRole>('customer');
   const [fullName, setFullName] = useState(currentUser?.full_name || '');
-  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [phone, setPhone] = useState(currentUser?.phone ? formatPhoneNumber(currentUser.phone) : '');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value, phone);
+    setPhone(formatted);
+    if (phoneError) setPhoneError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidPhoneNumber(phone)) {
+      setPhoneError('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และมีเครื่องหมายขีด (-) รวม 12 ตัวอักษร เช่น 086-555-1234');
+      return;
+    }
+    setPhoneError(null);
+    if (updateUserProfile) {
+      await updateUserProfile({ full_name: fullName, phone: phone.trim(), role: selectedRole });
+    }
     loginAsDemo(selectedRole);
     if (selectedRole === 'customer') {
       router.push('/customer/dashboard');
@@ -102,15 +118,36 @@ export default function OnboardingPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อ</label>
-              <input
-                type="tel"
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="เช่น 081-234-5678"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>เบอร์โทรศัพท์ติดต่อ</span>
+                <span className={`text-[10px] font-bold ${phone.length === 12 ? 'text-blue-600' : 'text-slate-400'}`}>
+                  {phone.length}/12 ตัว
+                </span>
+              </label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  required
+                  placeholder="086-555-1234"
+                  maxLength={12}
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 font-mono tracking-wider transition ${
+                    phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : 'border-slate-200 focus:ring-blue-500'
+                  }`}
+                />
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              {phoneError ? (
+                <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{phoneError}</span>
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-400">
+                  * พิมพ์เฉพาะตัวเลข ระบบจะใส่ขีด (-) ให้อัตโนมัติ (เช่น 086 ➔ ขีด ➔ 555 ➔ ขีด ➔ 1234)
+                </p>
+              )}
             </div>
           </div>
 

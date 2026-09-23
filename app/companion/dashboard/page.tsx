@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context/AppContext';
 import { INITIAL_PROFILES } from '@/lib/mockData';
 import StatusBadge from '@/components/StatusBadge';
+import ConfirmModal from '@/components/ConfirmModal';
 import { 
   Calendar, 
   MapPin, 
@@ -20,7 +21,9 @@ import {
   Settings,
   Power,
   AlertCircle,
-  LogIn
+  LogIn,
+  Phone,
+  Ban
 } from 'lucide-react';
 import { Booking } from '@/lib/types';
 
@@ -28,8 +31,11 @@ export default function CompanionDashboardPage() {
   const router = useRouter();
   const { 
     currentUser, 
+    role,
+    switchRole,
     companions, 
     bookings, 
+    allProfiles,
     acceptBooking, 
     updateBookingStatus, 
     toggleCompanionAvailability 
@@ -40,8 +46,10 @@ export default function CompanionDashboardPage() {
   useEffect(() => {
     if (!currentUser) {
       router.replace('/login');
+    } else if (role !== 'companion') {
+      switchRole('companion');
     }
-  }, [currentUser, router]);
+  }, [currentUser, role, router, switchRole]);
 
   if (!currentUser) {
     return (
@@ -59,38 +67,121 @@ export default function CompanionDashboardPage() {
     );
   }
 
-  // Match companion profile
+  // Match companion profile for current user
   const companionId = currentUser.id;
-  const companionProfile = companions.find((c) => c.id === companionId) || companions[0];
-  const userDetails = INITIAL_PROFILES[companionProfile.id] || currentUser;
+  const companionProfile = companions.find((c) => c.id === companionId) || {
+    id: currentUser.id,
+    bio: 'ผู้ช่วยร่วมเดินทางพร้อมให้บริการ',
+    experience_years: 2,
+    skills: ['เข็นรถเข็นผู้สูงอายุ', 'คุ้นเคยระบบโรงพยาบาล', 'ปฐมพยาบาลเบื้องต้น'],
+    service_areas: ['กรุงเทพฯ และปริมณฑล'],
+    hourly_rate: 250,
+    is_verified: false,
+    is_available: true,
+    rating_avg: 5.0,
+    rating_count: 1,
+    profile: currentUser,
+  };
+  const userDetails = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
 
   // Filter Bookings
   // 1. Requests: Pending jobs directed to this companion OR open jobs (companion_id is null)
   const pendingRequests = bookings.filter(
-    (b) => b.status === 'pending' && (b.companion_id === companionProfile.id || !b.companion_id)
+    (b) => b.status === 'pending' && (b.companion_id === currentUser.id || !b.companion_id)
   );
 
   // 2. Active Jobs: Jobs accepted by this companion or currently in progress
   const activeJobs = bookings.filter(
-    (b) => b.companion_id === companionProfile.id && (b.status === 'accepted' || b.status === 'in_progress')
+    (b) => b.companion_id === currentUser.id && (b.status === 'accepted' || b.status === 'in_progress')
   );
 
   // 3. Completed Jobs History
   const completedJobs = bookings.filter(
-    (b) => b.companion_id === companionProfile.id && b.status === 'completed'
+    (b) => b.companion_id === currentUser.id && b.status === 'completed'
   );
 
   // Calculate earnings
   const totalEarnings = completedJobs.reduce((sum, b) => sum + b.estimated_cost, 0);
 
+  // Modal Dialog Config
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'success' | 'primary';
+    isAlertOnly?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const handleAccept = (bookingId: string) => {
-    acceptBooking(bookingId, companionProfile.id);
+    const targetBooking = bookings.find((b) => b.id === bookingId);
+    if (targetBooking && currentUser && targetBooking.customer_id === currentUser.id) {
+      setModalConfig({
+        isOpen: true,
+        title: 'ไม่สามารถรับงานของตนเองได้',
+        message: 'คุณเป็นผู้สร้างคำขอบริการนี้ในฐานะผู้ว่าจ้าง ระบบไม่อนุญาตให้ผู้ว่าจ้างกดตอบรับงานของตนเองครับ',
+        confirmText: 'เข้าใจแล้ว',
+        variant: 'warning',
+        isAlertOnly: true,
+        onConfirm: () => setModalConfig((prev) => ({ ...prev, isOpen: false })),
+      });
+      return;
+    }
+
+    if (!companionProfile.is_verified) {
+      setModalConfig({
+        isOpen: true,
+        title: 'รอการอนุมัติจากผู้ดูแลระบบ',
+        message: 'บัญชีผู้ร่วมเดินทางของคุณยังไม่ได้รับการอนุมัติจากแอดมิน จึงไม่สามารถรับงานได้ในขณะนี้ กรุณารอแอดมินตรวจสอบและอนุมัติเข้าทำงานก่อนครับ',
+        confirmText: 'รับทราบ',
+        variant: 'warning',
+        isAlertOnly: true,
+        onConfirm: () => setModalConfig((prev) => ({ ...prev, isOpen: false })),
+      });
+      return;
+    }
+    acceptBooking(bookingId, currentUser.id);
   };
 
   const handleDecline = (bookingId: string) => {
-    if (confirm('คุณต้องการปฏิเสธคำขอนี้ใช่หรือไม่?')) {
-      updateBookingStatus(bookingId, 'cancelled');
+    const targetBooking = bookings.find((b) => b.id === bookingId);
+    if (targetBooking && currentUser && targetBooking.customer_id === currentUser.id) {
+      setModalConfig({
+        isOpen: true,
+        title: 'คำขอนี้สร้างโดยตัวคุณเอง',
+        message: 'คุณเป็นผู้สร้างคำขอนี้ในฐานะผู้ว่าจ้าง หากต้องการยกเลิกคำขอ กรุณาไปยกเลิกที่หน้าแดชบอร์ดลูกค้าครับ',
+        confirmText: 'ไปยังหน้าลูกค้า',
+        cancelText: 'ปิด',
+        variant: 'warning',
+        isAlertOnly: false,
+        onConfirm: () => {
+          setModalConfig((prev) => ({ ...prev, isOpen: false }));
+          router.push('/customer/dashboard');
+        },
+      });
+      return;
     }
+
+    setModalConfig({
+      isOpen: true,
+      title: 'ยืนยันการปฏิเสธคำขอ',
+      message: 'คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธคำขอนี้? สถานะคำขอจะถูกเปลี่ยนเป็นยกเลิก',
+      confirmText: 'ใช่, ปฏิเสธคำขอ',
+      cancelText: 'ย้อนกลับ',
+      variant: 'danger',
+      isAlertOnly: false,
+      onConfirm: () => {
+        updateBookingStatus(bookingId, 'cancelled');
+        setModalConfig((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const handleStartTrip = (bookingId: string) => {
@@ -98,13 +189,40 @@ export default function CompanionDashboardPage() {
   };
 
   const handleCompleteTrip = (bookingId: string) => {
-    if (confirm('ยืนยันว่าการเดินทางและทำธุระเสร็จสิ้นเรียบร้อยแล้ว?')) {
-      updateBookingStatus(bookingId, 'completed');
-    }
+    setModalConfig({
+      isOpen: true,
+      title: 'ยืนยันการสิ้นสุดการเดินทาง',
+      message: 'ยืนยันว่าการเดินทางและช่วยเหลือทำธุระเสร็จสิ้นเรียบร้อยแล้วใช่หรือไม่? ระบบจะบันทึกสถานะเป็นสำเร็จและให้ลูกค้าสามารถเขียนรีวิวได้',
+      confirmText: 'ใช่, เสร็จสิ้นเรียบร้อย',
+      cancelText: 'ยังไม่เสร็จ',
+      variant: 'success',
+      isAlertOnly: false,
+      onConfirm: () => {
+        updateBookingStatus(bookingId, 'completed');
+        setModalConfig((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {/* Verification Warning Alert Banner */}
+      {!companionProfile.is_verified && (
+        <div className="p-5 rounded-3xl bg-amber-50/90 border border-amber-200/80 text-amber-900 shadow-xs flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-sm text-amber-900">
+              สถานะบัญชี: รอผู้ดูแลระบบ (Admin) อนุมัติและรับรองประวัติ
+            </h3>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              บัญชีผู้ร่วมเดินทางของคุณยังไม่ได้รับการอนุมัติจากแอดมิน คุณสามารถดูรายละเอียดคำขอและแก้ไขข้อมูลบริการได้ แต่จะ<strong>ยังไม่สามารถกดรับงานได้</strong>จนกว่าแอดมินจะกดอนุมัติเข้าทำงานในระบบ
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Companion Stats & Status Banner */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -114,10 +232,15 @@ export default function CompanionDashboardPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black text-slate-900">{userDetails?.full_name}</h1>
-              {companionProfile.is_verified && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                  Verified
+              {companionProfile.is_verified ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  อนุมัติแล้ว (Verified)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                  รอการอนุมัติ (Pending)
                 </span>
               )}
             </div>
@@ -130,6 +253,17 @@ export default function CompanionDashboardPage() {
               <span>ค่าบริการ: ฿{companionProfile.hourly_rate}/ชม.</span>
               <span>•</span>
               <span>ประสบการณ์ {companionProfile.experience_years} ปี</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-1.5">
+              <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>เบอร์ติดต่อของคุณ:</span>
+              {userDetails?.phone ? (
+                <span className="font-bold text-slate-800">{userDetails.phone}</span>
+              ) : (
+                <Link href="/companion/profile" className="text-amber-600 font-semibold hover:underline">
+                  (ยังไม่ได้ระบุเบอร์โทร - คลิกเพื่อเพิ่ม)
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -238,18 +372,28 @@ export default function CompanionDashboardPage() {
         <div className="space-y-4">
           {pendingRequests.length > 0 ? (
             pendingRequests.map((booking) => {
-              const customer = INITIAL_PROFILES[booking.customer_id];
-              const isDirect = booking.companion_id === companionProfile.id;
+              const customer = allProfiles.find((p) => p.id === booking.customer_id) || INITIAL_PROFILES[booking.customer_id];
+              const isDirect = booking.companion_id === currentUser.id;
+              const isSelf = Boolean(currentUser && booking.customer_id === currentUser.id);
 
               return (
                 <div
                   key={booking.id}
-                  className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-md transition space-y-4"
+                  className={`p-6 rounded-3xl border transition space-y-4 ${
+                    isSelf 
+                      ? 'bg-amber-50/20 border-amber-200/90 shadow-2xs' 
+                      : 'bg-white border-slate-200/80 shadow-xs hover:shadow-md'
+                  }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-bold text-slate-900">{booking.title}</h3>
+                        {isSelf && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                            👤 คำขอของคุณเอง
+                          </span>
+                        )}
                         {isDirect ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                             ⭐ ลูกค้าระบุตัวคุณโดยตรง
@@ -261,7 +405,7 @@ export default function CompanionDashboardPage() {
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        ผู้จอง: {customer?.full_name || 'ลูกค้า Care Companion'} • เบอร์โทร: {customer?.phone || '081-xxx-xxxx'}
+                        ผู้จอง: {customer?.full_name || 'ลูกค้า Care Companion'} {isSelf ? '(คุณ)' : ''} • เบอร์โทร: {customer?.phone || '081-xxx-xxxx'}
                       </p>
                     </div>
                     <div className="text-right">
@@ -271,6 +415,16 @@ export default function CompanionDashboardPage() {
                       </p>
                     </div>
                   </div>
+
+                  {isSelf && (
+                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start sm:items-center gap-2.5">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                      <div>
+                        <span className="font-bold">คุณเป็นผู้สร้างคำขอนี้ในฐานะผู้ว่าจ้าง:</span>{' '}
+                        <span>ระบบไม่อนุญาตให้กดรับงานของตนเอง (คำขอนี้กำลังเปิดให้ผู้ร่วมเดินทางท่านอื่นในพื้นที่กดรับงาน)</span>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <div>
@@ -295,19 +449,52 @@ export default function CompanionDashboardPage() {
 
                   {/* Actions */}
                   <div className="flex items-center justify-end gap-3 pt-2">
-                    <button
-                      onClick={() => handleDecline(booking.id)}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
-                    >
-                      ปฏิเสธ
-                    </button>
-                    <button
-                      onClick={() => handleAccept(booking.id)}
-                      className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>ตอบรับเป็นผู้ร่วมเดินทาง</span>
-                    </button>
+                    {isSelf ? (
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <Link
+                          href="/customer/dashboard"
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition"
+                        >
+                          จัดการคำขอในหน้าแดชบอร์ดลูกค้า
+                        </Link>
+                        <button
+                          disabled
+                          type="button"
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center gap-1.5"
+                          title="คุณไม่สามารถตอบรับงานที่ตนเองเป็นผู้ว่าจ้างได้"
+                        >
+                          <Ban className="w-3.5 h-3.5 text-slate-400" />
+                          <span>ไม่สามารถรับงานของตนเองได้</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleDecline(booking.id)}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
+                        >
+                          ปฏิเสธ
+                        </button>
+                        {companionProfile.is_verified ? (
+                          <button
+                            onClick={() => handleAccept(booking.id)}
+                            className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>ตอบรับเป็นผู้ร่วมเดินทาง</span>
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center gap-1.5"
+                            title="ต้องได้รับการอนุมัติจากแอดมินก่อนจึงจะรับงานได้"
+                          >
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                            <span>รอแอดมินอนุมัติเข้างานก่อน</span>
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -325,7 +512,7 @@ export default function CompanionDashboardPage() {
         <div className="space-y-4">
           {activeJobs.length > 0 ? (
             activeJobs.map((booking) => {
-              const customer = INITIAL_PROFILES[booking.customer_id];
+              const customer = allProfiles.find((p) => p.id === booking.customer_id) || INITIAL_PROFILES[booking.customer_id];
 
               return (
                 <div
@@ -421,6 +608,19 @@ export default function CompanionDashboardPage() {
           )}
         </div>
       )}
+
+      {/* Action Confirmation & Alert Modal */}
+      <ConfirmModal
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        variant={modalConfig.variant}
+        isAlertOnly={modalConfig.isAlertOnly}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

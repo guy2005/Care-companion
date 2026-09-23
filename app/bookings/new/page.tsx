@@ -11,7 +11,9 @@ import {
   Compass, 
   UserCheck, 
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  Phone,
+  Ban
 } from 'lucide-react';
 
 function BookingForm() {
@@ -19,7 +21,7 @@ function BookingForm() {
   const searchParams = useSearchParams();
   const initialCompanionId = searchParams.get('companion_id') || '';
 
-  const { currentUser, role, companions, categories, createBooking, loginAsDemo } = useApp();
+  const { currentUser, role, companions, categories, allProfiles, createBooking, loginAsDemo } = useApp();
 
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '');
   const [title, setTitle] = useState('');
@@ -47,20 +49,27 @@ function BookingForm() {
   const ratePerHour = selectedCompanion ? selectedCompanion.hourly_rate : 250;
   const estimatedCost = Math.round(durationHours * ratePerHour);
 
+  const isSelfSelected = Boolean(currentUser && selectedCompanionId && selectedCompanionId === currentUser.id);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (isSelfSelected) {
+      setError('คุณไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้ กรุณาเลือกผู้ช่วยท่านอื่น หรือเปิดรับคำขอทั่วไป');
+      return;
+    }
 
     if (!title.trim() || !origin.trim() || !destination.trim() || !scheduledDate || !scheduledTime) {
       setError('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
       return;
     }
 
-    // Auto-login as customer if currently logged in as companion/admin or not logged in
+    // Use active logged-in user id, or fallback to demo customer
     let customerId = currentUser?.id;
-    if (!currentUser || role !== 'customer') {
+    if (!customerId) {
       loginAsDemo('customer');
-      customerId = 'user-customer-1';
+      customerId = '55555555-5555-5555-5555-555555555555';
     }
 
     setIsSubmitting(true);
@@ -276,15 +285,43 @@ function BookingForm() {
               <option value="">
                 📢 เปิดรับคำขอทั่วไป (ให้ผู้ช่วยในพื้นที่กดรับงานตามสะดวก)
               </option>
-              {companions.map((c) => {
-                const p = INITIAL_PROFILES[c.id];
-                return (
-                  <option key={c.id} value={c.id}>
-                    👤 {p?.full_name || 'ผู้ช่วย'} - ฿{c.hourly_rate}/ชม. (⭐ {c.rating_avg.toFixed(1)})
-                  </option>
-                );
-              })}
+              {companions
+                .filter((c) => c.is_verified)
+                .map((c) => {
+                  const p = allProfiles.find((prof) => prof.id === c.id) || INITIAL_PROFILES[c.id] || c.profile;
+                  const isSelf = Boolean(currentUser && c.id === currentUser.id);
+                  return (
+                    <option key={c.id} value={c.id} disabled={isSelf}>
+                      👤 {p?.full_name || 'ผู้ช่วย'} - ฿{c.hourly_rate}/ชม. (⭐ {c.rating_avg.toFixed(1)})
+                      {isSelf ? ' 🚫 (บัญชีของคุณ - ไม่สามารถจ้างตัวเองได้)' : ''}
+                    </option>
+                  );
+                })}
             </select>
+            {isSelfSelected ? (
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs flex items-center gap-2 text-rose-800 mt-2">
+                <Ban className="w-4 h-4 text-rose-600 shrink-0" />
+                <span className="font-semibold">
+                  คุณไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้ กรุณาเลือกผู้ช่วยท่านอื่น หรือเลือกเปิดรับคำขอทั่วไป
+                </span>
+              </div>
+            ) : selectedCompanion && (() => {
+              const p = allProfiles.find((prof) => prof.id === selectedCompanion.id) || INITIAL_PROFILES[selectedCompanion.id] || selectedCompanion.profile;
+              return (
+                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs flex flex-wrap items-center justify-between gap-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-800">ผู้ช่วยที่เลือก: {p?.full_name}</span>
+                    {p?.phone && (
+                      <span className="inline-flex items-center gap-1 text-emerald-800 font-semibold bg-white px-2 py-0.5 rounded-lg border border-emerald-200">
+                        <Phone className="w-3 h-3 text-emerald-600" />
+                        <span>โทร: {p.phone}</span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-bold text-emerald-700">฿{selectedCompanion.hourly_rate} / ชม.</span>
+                </div>
+              );
+            })()}
             <p className="text-[11px] text-slate-400">
               * หากไม่ระบุผู้ช่วย คำขอจะถูกส่งไปยังกระดานงานของผู้ร่วมเดินทางทุกคนในพื้นที่เพื่อกดรับงาน
             </p>
@@ -318,10 +355,19 @@ function BookingForm() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-lg shadow-blue-600/25 cursor-pointer disabled:opacity-50"
+            disabled={isSubmitting || isSelfSelected}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold text-white transition shadow-lg ${
+              isSelfSelected
+                ? 'bg-slate-400 cursor-not-allowed shadow-none'
+                : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-blue-600/25 cursor-pointer disabled:opacity-50'
+            }`}
           >
-            {isSubmitting ? (
+            {isSelfSelected ? (
+              <>
+                <Ban className="w-4 h-4" />
+                <span>ไม่สามารถจ้างตัวเองได้ (กรุณาเปลี่ยนผู้ช่วย)</span>
+              </>
+            ) : isSubmitting ? (
               <span>กำลังส่งคำขอ...</span>
             ) : (
               <>

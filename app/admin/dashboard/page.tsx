@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context/AppContext';
 import { INITIAL_PROFILES } from '@/lib/mockData';
 import StatusBadge from '@/components/StatusBadge';
+import ConfirmModal from '@/components/ConfirmModal';
 import { 
   ShieldCheck, 
   Users, 
@@ -22,7 +23,8 @@ import {
   MapPin,
   Clock,
   AlertCircle,
-  LogIn
+  LogIn,
+  Phone
 } from 'lucide-react';
 import { BookingStatus } from '@/lib/types';
 
@@ -30,8 +32,11 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { 
     currentUser, 
+    role,
+    switchRole,
     companions, 
     bookings, 
+    allProfiles,
     toggleCompanionVerification, 
     updateBookingStatus 
   } = useApp();
@@ -39,12 +44,15 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'verification' | 'bookings' | 'users'>('verification');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentUser) {
       router.replace('/login');
+    } else if (role !== 'admin') {
+      switchRole('admin');
     }
-  }, [currentUser, router]);
+  }, [currentUser, role, router, switchRole]);
 
   if (!currentUser) {
     return (
@@ -63,7 +71,7 @@ export default function AdminDashboardPage() {
   }
 
   // Calculations
-  const totalUsers = Object.keys(INITIAL_PROFILES).length;
+  const totalUsers = allProfiles.length > 0 ? allProfiles.length : Object.keys(INITIAL_PROFILES).length;
   const verifiedCompanionsCount = companions.filter((c) => c.is_verified).length;
   const totalBookingsCount = bookings.length;
   const completedBookingsCount = bookings.filter((b) => b.status === 'completed').length;
@@ -205,7 +213,7 @@ export default function AdminDashboardPage() {
 
             <div className="divide-y divide-slate-100">
               {companions.map((companion) => {
-                const profile = INITIAL_PROFILES[companion.id];
+                const profile = allProfiles.find((p) => p.id === companion.id) || companion.profile || INITIAL_PROFILES[companion.id];
 
                 return (
                   <div
@@ -226,7 +234,7 @@ export default function AdminDashboardPage() {
                       />
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-slate-900">{profile?.full_name}</h4>
+                          <h4 className="text-sm font-bold text-slate-900">{profile?.full_name || 'ผู้ร่วมเดินทาง'}</h4>
                           {companion.is_verified ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                               <ShieldCheck className="w-3 h-3 text-emerald-600" />
@@ -245,6 +253,11 @@ export default function AdminDashboardPage() {
                           <span>ประสบการณ์: {companion.experience_years} ปี</span>
                           <span>•</span>
                           <span>⭐ {companion.rating_avg.toFixed(1)} ({companion.rating_count} รีวิว)</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1 font-semibold text-slate-700">
+                            <Phone className="w-3 h-3 text-emerald-600" />
+                            {profile?.phone || 'ยังไม่ได้ระบุเบอร์โทร'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -315,9 +328,9 @@ export default function AdminDashboardPage() {
 
           <div className="space-y-3">
             {filteredBookings.map((booking) => {
-              const customer = INITIAL_PROFILES[booking.customer_id];
+              const customer = allProfiles.find((p) => p.id === booking.customer_id) || INITIAL_PROFILES[booking.customer_id];
               const companion = booking.companion_id
-                ? INITIAL_PROFILES[booking.companion_id]
+                ? allProfiles.find((p) => p.id === booking.companion_id) || INITIAL_PROFILES[booking.companion_id]
                 : null;
 
               return (
@@ -350,12 +363,8 @@ export default function AdminDashboardPage() {
                     </span>
                     {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                       <button
-                        onClick={() => {
-                          if (confirm('ต้องการยกเลิกคำขอนี้ในฐานะแอดมินหรือไม่?')) {
-                            updateBookingStatus(booking.id, 'cancelled');
-                          }
-                        }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100"
+                        onClick={() => setCancelBookingId(booking.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 cursor-pointer"
                       >
                         ยกเลิกงาน
                       </button>
@@ -392,13 +401,13 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {Object.values(INITIAL_PROFILES).map((u) => (
+                {(allProfiles.length > 0 ? allProfiles : Object.values(INITIAL_PROFILES)).map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50/50">
                     <td className="py-3 px-4 font-bold text-slate-900 flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px]">
-                        {u.full_name.charAt(0)}
+                        {u.full_name?.charAt(0) || 'U'}
                       </div>
-                      <span>{u.full_name}</span>
+                      <span>{u.full_name || 'ผู้ใช้งาน'}</span>
                     </td>
                     <td className="py-3 px-4 text-slate-600">{u.email}</td>
                     <td className="py-3 px-4 text-slate-600">{u.phone || '-'}</td>
@@ -420,7 +429,7 @@ export default function AdminDashboardPage() {
                       )}
                     </td>
                     <td className="py-3 px-4 text-slate-500">
-                      {new Date(u.created_at).toLocaleDateString('th-TH')}
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString('th-TH') : '-'}
                     </td>
                   </tr>
                 ))}
@@ -429,6 +438,23 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Admin Cancel Booking Confirmation Modal */}
+      <ConfirmModal
+        isOpen={Boolean(cancelBookingId)}
+        title="ยืนยันการยกเลิกคำขอในฐานะแอดมิน"
+        message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำขอนี้ในฐานะผู้ดูแลระบบ? สถานะของคำขอจะถูกเปลี่ยนเป็นยกเลิก (cancelled)"
+        confirmText="ใช่, ยกเลิกคำขอ"
+        cancelText="ย้อนกลับ"
+        variant="danger"
+        onConfirm={() => {
+          if (cancelBookingId) {
+            updateBookingStatus(cancelBookingId, 'cancelled');
+            setCancelBookingId(null);
+          }
+        }}
+        onCancel={() => setCancelBookingId(null)}
+      />
     </div>
   );
 }

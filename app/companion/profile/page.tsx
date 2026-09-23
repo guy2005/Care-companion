@@ -15,12 +15,14 @@ import {
   FileText, 
   Upload,
   AlertCircle,
-  LogIn
+  LogIn,
+  Phone
 } from 'lucide-react';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/formatters';
 
 export default function CompanionProfilePage() {
   const router = useRouter();
-  const { currentUser, companions, updateCompanionProfile } = useApp();
+  const { currentUser, companions, allProfiles, updateCompanionProfile } = useApp();
 
   useEffect(() => {
     if (!currentUser) {
@@ -45,17 +47,54 @@ export default function CompanionProfilePage() {
   }
 
   const companionId = currentUser.id;
-  const companion = companions.find((c) => c.id === companionId) || companions[0];
-  const userDetails = INITIAL_PROFILES[companion?.id || ''] || currentUser;
+  const companion = companions.find((c) => c.id === companionId) || {
+    id: currentUser.id,
+    bio: '',
+    experience_years: 1,
+    skills: ['เข็นรถเข็นผู้สูงอายุ', 'คุ้นเคยระบบโรงพยาบาล'],
+    service_areas: ['กรุงเทพฯ'],
+    hourly_rate: 250,
+    is_verified: true,
+    is_available: true,
+    rating_avg: 5.0,
+    rating_count: 0,
+  };
+  const userDetails = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
 
-  const [bio, setBio] = useState(companion.bio);
-  const [experienceYears, setExperienceYears] = useState(companion.experience_years);
-  const [hourlyRate, setHourlyRate] = useState(companion.hourly_rate);
-  const [skills, setSkills] = useState<string[]>(companion.skills);
+  const [phone, setPhone] = useState(userDetails?.phone ? formatPhoneNumber(userDetails.phone) : '');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [bio, setBio] = useState(companion.bio || '');
+  const [experienceYears, setExperienceYears] = useState(companion.experience_years || 1);
+  const [hourlyRate, setHourlyRate] = useState(companion.hourly_rate || 250);
+  const [skills, setSkills] = useState<string[]>(companion.skills || []);
   const [newSkill, setNewSkill] = useState('');
-  const [serviceAreas, setServiceAreas] = useState<string[]>(companion.service_areas);
+  const [serviceAreas, setServiceAreas] = useState<string[]>(companion.service_areas || []);
   const [newArea, setNewArea] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const active = companions.find((c) => c.id === currentUser.id);
+    if (active) {
+      setBio(active.bio || '');
+      setExperienceYears(active.experience_years ?? 1);
+      setHourlyRate(active.hourly_rate ?? 250);
+      setSkills(active.skills || []);
+      setServiceAreas(active.service_areas || []);
+    }
+    const currentProf = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
+    if (currentProf?.phone) {
+      setPhone(formatPhoneNumber(currentProf.phone));
+    }
+  }, [companions, allProfiles, currentUser]);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value, phone);
+    setPhone(formatted);
+    if (phoneError) {
+      setPhoneError(null);
+    }
+  };
 
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,15 +122,34 @@ export default function CompanionProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateCompanionProfile(companion.id, {
-      bio,
-      experience_years: experienceYears,
-      hourly_rate: hourlyRate,
-      skills,
-      service_areas: serviceAreas,
-    });
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+
+    // Strict validation: must be 10 digits and 2 dashes (12 characters total, e.g. 086-555-1234)
+    if (!isValidPhoneNumber(phone)) {
+      setPhoneError('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และมีเครื่องหมายขีด (-) รวม 12 ตัวอักษร เช่น 086-555-1234');
+      return;
+    }
+
+    setPhoneError(null);
+    setIsSaving(true);
+    try {
+      await updateCompanionProfile(
+        currentUser.id,
+        {
+          bio,
+          experience_years: experienceYears,
+          hourly_rate: hourlyRate,
+          skills,
+          service_areas: serviceAreas,
+        },
+        phone.trim()
+      );
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err) {
+      console.error('Error saving companion profile:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -126,18 +184,59 @@ export default function CompanionProfilePage() {
 
       {/* Form Card */}
       <form onSubmit={handleSave} className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
-        {/* Name & Role preview */}
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-slate-500">ชื่อผู้ให้บริการ</p>
-            <p className="text-sm font-bold text-slate-800">{userDetails?.full_name}</p>
+        {/* Name & Phone Info Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-slate-500">ชื่อผู้ให้บริการ</p>
+              <p className="text-sm font-bold text-slate-800">{userDetails?.full_name}</p>
+            </div>
+            {companion.is_verified && (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                ยืนยันตัวตนแล้ว
+              </span>
+            )}
           </div>
-          {companion.is_verified && (
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              ยืนยันตัวตนแล้ว
-            </span>
-          )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                <span>เบอร์โทรศัพท์สำหรับติดต่อ (บันทึกลงระบบ Supabase)</span>
+                <span className="text-rose-500">*</span>
+              </span>
+              <span className={`text-[10px] font-bold ${phone.length === 12 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                {phone.length}/12 ตัว
+              </span>
+            </label>
+            <div className="relative">
+              <input
+                type="tel"
+                placeholder="086-555-1234"
+                maxLength={12}
+                value={phone}
+                onChange={handlePhoneChange}
+                required
+                className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 font-mono tracking-wider transition ${
+                  phoneError
+                    ? 'border-rose-400 ring-2 ring-rose-400/20'
+                    : 'border-slate-200 focus:ring-emerald-500'
+                }`}
+              />
+              <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            {phoneError ? (
+              <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 mt-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>{phoneError}</span>
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-400">
+                * พิมพ์เฉพาะตัวเลข ระบบจะใส่ขีด (-) ให้อัตโนมัติ (เช่น 086 ➔ ขีด ➔ 555 ➔ ขีด ➔ 1234 รวม 12 ตัวอักษร)
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Bio */}
@@ -279,10 +378,11 @@ export default function CompanionProfilePage() {
         <div className="flex justify-end pt-4">
           <button
             type="submit"
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 transition shadow-md shadow-emerald-600/20"
+            disabled={isSaving}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 transition shadow-md shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
           >
             <Save className="w-4 h-4" />
-            <span>บันทึกข้อมูลบริการ</span>
+            <span>{isSaving ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูลบริการ'}</span>
           </button>
         </div>
       </form>

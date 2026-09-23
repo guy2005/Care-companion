@@ -2,15 +2,18 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CompanionProfile } from '@/lib/types';
+import { useApp } from '@/lib/context/AppContext';
 import { INITIAL_PROFILES } from '@/lib/mockData';
-import { Star, ShieldCheck, MapPin, Clock, ArrowRight, CheckCircle } from 'lucide-react';
+import { Star, ShieldCheck, MapPin, Clock, ArrowRight, CheckCircle, Phone, Ban } from 'lucide-react';
 
 interface CompanionCardProps {
   companion: CompanionProfile;
 }
 
 export default function CompanionCard({ companion }: CompanionCardProps) {
-  const profile = companion.profile || INITIAL_PROFILES[companion.id];
+  const { currentUser, allProfiles } = useApp();
+  const isSelf = Boolean(currentUser && currentUser.id === companion.id);
+  const profile = companion.profile || allProfiles.find((p) => p.id === companion.id) || INITIAL_PROFILES[companion.id];
   const name = profile?.full_name || 'ผู้ร่วมเดินทาง';
   const avatar = profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
 
@@ -42,6 +45,11 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-slate-900 truncate">{name}</h3>
+                {isSelf && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    👤 บัญชีของคุณ
+                  </span>
+                )}
                 {companion.is_available ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -68,10 +76,18 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
                 </div>
               </div>
 
-              {/* Hourly Rate */}
-              <div className="mt-2 text-sm font-bold text-blue-600">
-                ฿{companion.hourly_rate}{' '}
-                <span className="text-xs font-normal text-slate-500">/ ชั่วโมง</span>
+              {/* Hourly Rate & Phone */}
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="text-sm font-bold text-blue-600">
+                  ฿{companion.hourly_rate}{' '}
+                  <span className="text-xs font-normal text-slate-500">/ ชั่วโมง</span>
+                </div>
+                {profile?.phone && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                    <Phone className="w-3 h-3 text-emerald-600" />
+                    <span>{profile.phone}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -112,13 +128,33 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
 
       {/* Action Footer */}
       <div className="p-4 bg-white">
-        <Link
-          href={`/companions/${companion.id}`}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-xs group-hover:bg-blue-700"
-        >
-          <span>ดูประวัติและจองผู้ช่วยนี้</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-        </Link>
+        {isSelf ? (
+          <div className="flex gap-2">
+            <Link
+              href={`/companions/${companion.id}`}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
+            >
+              <span>ดูโปรไฟล์</span>
+            </Link>
+            <button
+              disabled
+              type="button"
+              title="คุณไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้"
+              className="flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-[11px] font-bold text-slate-400 bg-slate-50 border border-slate-200 cursor-not-allowed"
+            >
+              <Ban className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>ไม่สามารถจ้างตัวเอง</span>
+            </button>
+          </div>
+        ) : (
+          <Link
+            href={`/companions/${companion.id}`}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-xs group-hover:bg-blue-700"
+          >
+            <span>ดูประวัติและจองผู้ช่วยนี้</span>
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context/AppContext';
 import { INITIAL_PROFILES } from '@/lib/mockData';
 import StatusBadge from '@/components/StatusBadge';
+import ConfirmModal from '@/components/ConfirmModal';
 import { 
   Calendar, 
   MapPin, 
@@ -19,13 +20,14 @@ import {
   X, 
   MessageSquare,
   ArrowRight,
-  LogIn
+  LogIn,
+  Phone
 } from 'lucide-react';
 import { Booking } from '@/lib/types';
 
 export default function CustomerDashboardPage() {
   const router = useRouter();
-  const { currentUser, bookings, updateBookingStatus, addReview, reviews } = useApp();
+  const { currentUser, role, switchRole, bookings, allProfiles, updateBookingStatus, addReview, reviews } = useApp();
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
   // Review Modal State
@@ -37,8 +39,10 @@ export default function CustomerDashboardPage() {
   useEffect(() => {
     if (!currentUser) {
       router.replace('/login');
+    } else if (role !== 'customer') {
+      switchRole('customer');
     }
-  }, [currentUser, router]);
+  }, [currentUser, role, router, switchRole]);
 
   if (!currentUser) {
     return (
@@ -68,9 +72,17 @@ export default function CustomerDashboardPage() {
     (b) => b.status === 'completed' || b.status === 'cancelled'
   );
 
+  // Cancel Modal State
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+
   const handleCancelBooking = (bookingId: string) => {
-    if (confirm('คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?')) {
-      updateBookingStatus(bookingId, 'cancelled');
+    setCancelBookingId(bookingId);
+  };
+
+  const handleConfirmCancel = () => {
+    if (cancelBookingId) {
+      updateBookingStatus(cancelBookingId, 'cancelled');
+      setCancelBookingId(null);
     }
   };
 
@@ -89,7 +101,7 @@ export default function CustomerDashboardPage() {
       await addReview({
         booking_id: reviewBooking.id,
         customer_id: currentUser.id,
-        companion_id: reviewBooking.companion_id || 'user-companion-1',
+        companion_id: reviewBooking.companion_id || '11111111-1111-1111-1111-111111111111',
         rating,
         comment,
       });
@@ -165,7 +177,7 @@ export default function CustomerDashboardPage() {
         {(activeTab === 'active' ? activeBookings : historyBookings).length > 0 ? (
           (activeTab === 'active' ? activeBookings : historyBookings).map((booking) => {
             const companionProfile = booking.companion_id
-              ? INITIAL_PROFILES[booking.companion_id]
+              ? allProfiles.find((p) => p.id === booking.companion_id) || INITIAL_PROFILES[booking.companion_id]
               : null;
             const hasReviewed = reviews.some((r) => r.booking_id === booking.id);
 
@@ -227,6 +239,19 @@ export default function CustomerDashboardPage() {
                         <span className="text-amber-600">📢 รอผู้ช่วยในพื้นที่กดรับงาน</span>
                       )}
                     </p>
+                    {companionProfile && (
+                      <div className="flex items-center gap-1 text-slate-600">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>โทร: </span>
+                        {companionProfile.phone ? (
+                          <a href={`tel:${companionProfile.phone}`} className="font-bold text-emerald-700 hover:underline">
+                            {companionProfile.phone}
+                          </a>
+                        ) : (
+                          <span className="text-slate-400">ยังไม่ได้ระบุ</span>
+                        )}
+                      </div>
+                    )}
                     <p className="text-blue-600 font-bold">
                       ประมาณการ: ฿{booking.estimated_cost.toLocaleString()}
                     </p>
@@ -245,6 +270,16 @@ export default function CustomerDashboardPage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+                  {companionProfile?.phone && (booking.status === 'accepted' || booking.status === 'in_progress') && (
+                    <a
+                      href={`tel:${companionProfile.phone}`}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>โทรหาผู้ช่วย ({companionProfile.phone})</span>
+                    </a>
+                  )}
+
                   {booking.status === 'pending' && (
                     <button
                       onClick={() => handleCancelBooking(booking.id)}
@@ -379,6 +414,18 @@ export default function CustomerDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Cancel Confirmation Modal */}
+      <ConfirmModal
+        isOpen={Boolean(cancelBookingId)}
+        title="ยืนยันการยกเลิกคำขอ"
+        message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำขอนี้? เมื่อกดยกเลิกแล้ว รายการจะถูกย้ายไปยังประวัติและไม่สามารถย้อนกลับได้"
+        confirmText="ใช่, ยกเลิกคำขอ"
+        cancelText="ไม่ยกเลิก"
+        variant="danger"
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setCancelBookingId(null)}
+      />
     </div>
   );
 }

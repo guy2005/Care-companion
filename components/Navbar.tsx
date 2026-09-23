@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context/AppContext';
 import { 
   HeartHandshake, 
@@ -22,9 +22,21 @@ import { UserRole } from '@/lib/types';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { currentUser, role, loginAsDemo, signOut } = useApp();
+  const router = useRouter();
+  const { currentUser, role, switchRole, signOut } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+
+  const handleRoleSwitch = async (newRole: UserRole) => {
+    await switchRole(newRole);
+    if (newRole === 'customer') {
+      router.push('/customer/dashboard');
+    } else if (newRole === 'companion') {
+      router.push('/companion/dashboard');
+    } else if (newRole === 'admin') {
+      router.push('/admin/dashboard');
+    }
+  };
 
   const getRoleLabel = (r: UserRole) => {
     switch (r) {
@@ -46,38 +58,42 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 font-medium">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>โหมดทดสอบระบบสำหรับตรวจงาน & การนำเสนอ (สลับบทบาทได้ทันที):</span>
+            <span>
+              {currentUser?.email
+                ? `บัญชี: ${currentUser.email} (${currentRoleInfo.label.split(' ')[0]}) - สลับบทบาทตรวจงาน:`
+                : 'โหมดทดสอบระบบสำหรับตรวจงาน & การนำเสนอ (สลับบทบาทได้ทันที):'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => loginAsDemo('customer')}
-              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition ${
+              onClick={() => handleRoleSwitch('customer')}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition cursor-pointer ${
                 role === 'customer'
                   ? 'bg-white text-blue-800 shadow-xs'
                   : 'bg-white/20 hover:bg-white/30 text-white'
               }`}
             >
-              👤 Customer (สมชาย)
+              👤 Customer (ลูกค้า)
             </button>
             <button
-              onClick={() => loginAsDemo('companion')}
-              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition ${
+              onClick={() => handleRoleSwitch('companion')}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition cursor-pointer ${
                 role === 'companion'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'bg-white/20 hover:bg-white/30 text-white'
               }`}
             >
-              🤝 Companion (ครูปรียา)
+              🤝 Companion (ผู้ร่วมทาง)
             </button>
             <button
-              onClick={() => loginAsDemo('admin')}
-              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition ${
+              onClick={() => handleRoleSwitch('admin')}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition cursor-pointer ${
                 role === 'admin'
                   ? 'bg-white text-purple-800 shadow-xs'
                   : 'bg-white/20 hover:bg-white/30 text-white'
               }`}
             >
-              🛡️ Admin (ระบบกลาง)
+              🛡️ Admin (ผู้ดูแลระบบ)
             </button>
           </div>
         </div>
