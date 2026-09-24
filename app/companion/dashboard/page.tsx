@@ -18,12 +18,20 @@ import {
   DollarSign, 
   Star, 
   ShieldCheck, 
-  Settings,
-  Power,
-  AlertCircle,
-  LogIn,
-  Phone,
-  Ban
+  Settings, 
+  Power, 
+  AlertCircle, 
+  LogIn, 
+  Phone, 
+  Ban, 
+  HeartPulse, 
+  ShieldAlert,
+  Eye,
+  FileText,
+  X,
+  Activity,
+  Compass,
+  Users
 } from 'lucide-react';
 import { Booking } from '@/lib/types';
 
@@ -36,12 +44,14 @@ export default function CompanionDashboardPage() {
     companions, 
     bookings, 
     allProfiles,
+    categories,
     acceptBooking, 
     updateBookingStatus, 
     toggleCompanionAvailability 
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'requests' | 'active_jobs' | 'history'>('requests');
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (!currentUser) {
@@ -224,14 +234,14 @@ export default function CompanionDashboardPage() {
       )}
 
       {/* Companion Stats & Status Banner */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-emerald-500/20">
+      <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-emerald-500/20 shrink-0">
             {userDetails?.full_name ? userDetails.full_name.charAt(0) : 'ป'}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-slate-900">{userDetails?.full_name}</h1>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900">{userDetails?.full_name}</h1>
               {companionProfile.is_verified ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -244,7 +254,7 @@ export default function CompanionDashboardPage() {
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-3 text-xs text-slate-500 mt-1.5">
               <span className="flex items-center gap-1 text-amber-600 font-bold">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 {companionProfile.rating_avg.toFixed(1)} ({companionProfile.rating_count} รีวิว)
@@ -254,7 +264,7 @@ export default function CompanionDashboardPage() {
               <span>•</span>
               <span>ประสบการณ์ {companionProfile.experience_years} ปี</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-1.5">
+            <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-600 mt-1.5">
               <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>เบอร์ติดต่อของคุณ:</span>
               {userDetails?.phone ? (
@@ -269,13 +279,13 @@ export default function CompanionDashboardPage() {
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           {/* Availability Toggle */}
           <button
             onClick={() => toggleCompanionAvailability(companionProfile.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold border transition ${
+            className={`min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold border transition cursor-pointer ${
               companionProfile.is_available
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 shadow-2xs'
                 : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
             }`}
           >
@@ -285,7 +295,7 @@ export default function CompanionDashboardPage() {
 
           <Link
             href="/companion/profile"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition"
+            className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition"
           >
             <Settings className="w-4 h-4 text-slate-500" />
             <span>แก้ไขข้อมูลบริการ</span>
@@ -294,8 +304,8 @@ export default function CompanionDashboardPage() {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500">คำขอใหม่ที่รอการตอบรับ</span>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -303,7 +313,7 @@ export default function CompanionDashboardPage() {
           <div className="text-2xl font-black text-slate-900 mt-2">{pendingRequests.length} รายการ</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500">งานที่อยู่ระหว่างดำเนินการ</span>
             <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
@@ -311,7 +321,7 @@ export default function CompanionDashboardPage() {
           <div className="text-2xl font-black text-slate-900 mt-2">{activeJobs.length} รายการ</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500">รายได้สะสม (งานที่เสร็จสิ้น)</span>
             <DollarSign className="w-4 h-4 text-emerald-600" />
@@ -322,11 +332,11 @@ export default function CompanionDashboardPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
+      {/* Tabs - Smooth horizontal scroll on mobile */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 no-scrollbar">
         <button
           onClick={() => setActiveTab('requests')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`shrink-0 min-h-[44px] pb-2 px-3 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-2 cursor-pointer ${
             activeTab === 'requests'
               ? 'border-emerald-600 text-emerald-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -340,7 +350,7 @@ export default function CompanionDashboardPage() {
 
         <button
           onClick={() => setActiveTab('active_jobs')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`shrink-0 min-h-[44px] pb-2 px-3 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-2 cursor-pointer ${
             activeTab === 'active_jobs'
               ? 'border-emerald-600 text-emerald-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -354,14 +364,14 @@ export default function CompanionDashboardPage() {
 
         <button
           onClick={() => setActiveTab('history')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`shrink-0 min-h-[44px] pb-2 px-3 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-2 cursor-pointer ${
             activeTab === 'history'
               ? 'border-emerald-600 text-emerald-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <span>ประวัติงานที่สำเร็จแล้ว</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">
             {completedJobs.length}
           </span>
         </button>
@@ -373,6 +383,7 @@ export default function CompanionDashboardPage() {
           {pendingRequests.length > 0 ? (
             pendingRequests.map((booking) => {
               const customer = allProfiles.find((p) => p.id === booking.customer_id) || INITIAL_PROFILES[booking.customer_id];
+              const category = categories.find((c) => c.id === booking.service_category_id);
               const isDirect = booking.companion_id === currentUser.id;
               const isSelf = Boolean(currentUser && booking.customer_id === currentUser.id);
 
@@ -389,6 +400,11 @@ export default function CompanionDashboardPage() {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-bold text-slate-900">{booking.title}</h3>
+                        {category && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {category.name}
+                          </span>
+                        )}
                         {isSelf && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
                             👤 คำขอของคุณเอง
@@ -441,6 +457,63 @@ export default function CompanionDashboardPage() {
                     </div>
                   </div>
 
+                  {/* Customer Errand Details */}
+                  {booking.description && (
+                    <div className="p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/80 text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-slate-800 mb-1">
+                        <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>รายละเอียดคำขอจากลูกค้า:</span>
+                      </div>
+                      <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{booking.description}</p>
+                    </div>
+                  )}
+
+                  {/* Passenger & Emergency Care Requirements */}
+                  {(booking.passenger_name || booking.passenger_age || booking.emergency_contact_phone || booking.mobility_level) && (
+                    <div className="text-xs bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-emerald-700" />
+                          ผู้รับบริการ: {booking.passenger_name || 'ลูกค้า'}
+                          {booking.passenger_age ? ` (อายุ ${booking.passenger_age} ปี)` : ''}
+                        </span>
+                        {booking.is_for_other && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                            จองให้ผู้อื่น
+                          </span>
+                        )}
+                        {booking.mobility_level && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white border border-emerald-200 text-emerald-800">
+                            {booking.mobility_level === 'wheelchair' && '♿ นั่งวีลแชร์'}
+                            {booking.mobility_level === 'needs_cane' && '🦯 ใช้ไม้เท้า/ช่วยพยุง'}
+                            {booking.mobility_level === 'independent' && '🚶 เดินคล่องปกติ'}
+                            {booking.mobility_level === 'bedridden' && '🛏️ ดูแลใกล้ชิด'}
+                          </span>
+                        )}
+                      </div>
+
+                      {booking.emergency_contact_phone && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-600 shrink-0">
+                          <ShieldAlert className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>ติดต่อฉุกเฉิน:</span>
+                          <a href={`tel:${booking.emergency_contact_phone}`} className="font-bold text-rose-700 hover:underline">
+                            {booking.emergency_contact_name ? `${booking.emergency_contact_name} ` : ''}({booking.emergency_contact_phone})
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Medical Notes if any */}
+                  {booking.medical_notes && (
+                    <div className="text-xs text-slate-700 bg-rose-50/60 p-3 rounded-xl border border-rose-100 flex items-start gap-2">
+                      <HeartPulse className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-rose-900">ข้อมูลสุขภาพ/ยา:</strong> {booking.medical_notes}
+                      </span>
+                    </div>
+                  )}
+
                   {booking.special_notes && (
                     <p className="text-xs text-slate-600 bg-amber-50/70 p-3 rounded-xl border border-amber-100">
                       <strong>หมายเหตุเพิ่มเติม:</strong> {booking.special_notes}
@@ -448,53 +521,67 @@ export default function CompanionDashboardPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-3 pt-2">
-                    {isSelf ? (
-                      <div className="flex items-center gap-2.5 flex-wrap">
-                        <Link
-                          href="/customer/dashboard"
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition"
-                        >
-                          จัดการคำขอในหน้าแดชบอร์ดลูกค้า
-                        </Link>
-                        <button
-                          disabled
-                          type="button"
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center gap-1.5"
-                          title="คุณไม่สามารถตอบรับงานที่ตนเองเป็นผู้ว่าจ้างได้"
-                        >
-                          <Ban className="w-3.5 h-3.5 text-slate-400" />
-                          <span>ไม่สามารถรับงานของตนเองได้</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleDecline(booking.id)}
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
-                        >
-                          ปฏิเสธ
-                        </button>
-                        {companionProfile.is_verified ? (
-                          <button
-                            onClick={() => handleAccept(booking.id)}
-                            className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBookingDetails(booking)}
+                      className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <Eye className="w-4 h-4 text-emerald-600" />
+                      <span>ดูข้อมูลรายละเอียดคำขอ</span>
+                    </button>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      {isSelf ? (
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                          <Link
+                            href="/customer/dashboard"
+                            className="min-h-[44px] flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition text-center"
                           >
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>ตอบรับเป็นผู้ร่วมเดินทาง</span>
-                          </button>
-                        ) : (
+                            จัดการคำขอในหน้าแดชบอร์ดลูกค้า
+                          </Link>
                           <button
                             disabled
-                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center gap-1.5"
-                            title="ต้องได้รับการอนุมัติจากแอดมินก่อนจึงจะรับงานได้"
+                            type="button"
+                            className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
+                            title="คุณไม่สามารถตอบรับงานที่ตนเองเป็นผู้ว่าจ้างได้"
                           >
-                            <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                            <span>รอแอดมินอนุมัติเข้างานก่อน</span>
+                            <Ban className="w-3.5 h-3.5 text-slate-400" />
+                            <span>ไม่สามารถรับงานของตนเองได้</span>
                           </button>
-                        )}
-                      </>
-                    )}
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleDecline(booking.id)}
+                            className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 active:scale-95 transition cursor-pointer"
+                          >
+                            ปฏิเสธ
+                          </button>
+                          {companionProfile.is_verified ? (
+                            <button
+                              type="button"
+                              onClick={() => handleAccept(booking.id)}
+                              className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>ตอบรับเป็นผู้ร่วมเดินทาง</span>
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              type="button"
+                              className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
+                              title="ต้องได้รับการอนุมัติจากแอดมินก่อนจึงจะรับงานได้"
+                            >
+                              <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                              <span>รอแอดมินอนุมัติเข้างานก่อน</span>
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -513,6 +600,7 @@ export default function CompanionDashboardPage() {
           {activeJobs.length > 0 ? (
             activeJobs.map((booking) => {
               const customer = allProfiles.find((p) => p.id === booking.customer_id) || INITIAL_PROFILES[booking.customer_id];
+              const category = categories.find((c) => c.id === booking.service_category_id);
 
               return (
                 <div
@@ -521,8 +609,15 @@ export default function CompanionDashboardPage() {
                 >
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">{booking.title}</h3>
-                      <p className="text-xs text-slate-500">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base font-bold text-slate-900">{booking.title}</h3>
+                        {category && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {category.name}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
                         ลูกค้า: {customer?.full_name} • โทร: {customer?.phone}
                       </p>
                     </div>
@@ -544,27 +639,103 @@ export default function CompanionDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Flow buttons */}
-                  <div className="flex items-center justify-end gap-3 pt-2">
-                    {booking.status === 'accepted' && (
-                      <button
-                        onClick={() => handleStartTrip(booking.id)}
-                        className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-2 shadow-sm"
-                      >
-                        <Navigation className="w-4 h-4" />
-                        <span>เริ่มการเดินทาง / ไปพบลูกค้า</span>
-                      </button>
-                    )}
+                  {/* Customer Errand Details */}
+                  {booking.description && (
+                    <div className="p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/80 text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-slate-800 mb-1">
+                        <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>รายละเอียดคำขอจากลูกค้า:</span>
+                      </div>
+                      <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{booking.description}</p>
+                    </div>
+                  )}
 
-                    {booking.status === 'in_progress' && (
-                      <button
-                        onClick={() => handleCompleteTrip(booking.id)}
-                        className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition flex items-center gap-2 shadow-sm"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>สิ้นสุดบริการและส่งลูกค้าเรียบร้อย</span>
-                      </button>
-                    )}
+                  {/* Passenger & Emergency Care Requirements */}
+                  {(booking.passenger_name || booking.passenger_age || booking.emergency_contact_phone || booking.mobility_level) && (
+                    <div className="text-xs bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-emerald-700" />
+                          ผู้รับบริการ: {booking.passenger_name || 'ลูกค้า'}
+                          {booking.passenger_age ? ` (อายุ ${booking.passenger_age} ปี)` : ''}
+                        </span>
+                        {booking.is_for_other && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                            จองให้ผู้อื่น
+                          </span>
+                        )}
+                        {booking.mobility_level && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white border border-emerald-200 text-emerald-800">
+                            {booking.mobility_level === 'wheelchair' && '♿ นั่งวีลแชร์'}
+                            {booking.mobility_level === 'needs_cane' && '🦯 ใช้ไม้เท้า/ช่วยพยุง'}
+                            {booking.mobility_level === 'independent' && '🚶 เดินคล่องปกติ'}
+                            {booking.mobility_level === 'bedridden' && '🛏️ ดูแลใกล้ชิด'}
+                          </span>
+                        )}
+                      </div>
+
+                      {booking.emergency_contact_phone && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-600 shrink-0">
+                          <ShieldAlert className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>ติดต่อฉุกเฉิน:</span>
+                          <a href={`tel:${booking.emergency_contact_phone}`} className="font-bold text-rose-700 hover:underline">
+                            {booking.emergency_contact_name ? `${booking.emergency_contact_name} ` : ''}({booking.emergency_contact_phone})
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Medical Notes if any */}
+                  {booking.medical_notes && (
+                    <div className="text-xs text-slate-700 bg-rose-50/60 p-3 rounded-xl border border-rose-100 flex items-start gap-2">
+                      <HeartPulse className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-rose-900">ข้อมูลสุขภาพ/ยา:</strong> {booking.medical_notes}
+                      </span>
+                    </div>
+                  )}
+
+                  {booking.special_notes && (
+                    <p className="text-xs text-slate-600 bg-amber-50/70 p-3 rounded-xl border border-amber-100">
+                      <strong>หมายเหตุเพิ่มเติม:</strong> {booking.special_notes}
+                    </p>
+                  )}
+
+                  {/* Flow buttons */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBookingDetails(booking)}
+                      className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <Eye className="w-4 h-4 text-emerald-600" />
+                      <span>ดูข้อมูลรายละเอียดคำขอ</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {booking.status === 'accepted' && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartTrip(booking.id)}
+                          className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                        >
+                          <Navigation className="w-4 h-4" />
+                          <span>เริ่มการเดินทาง / ไปพบลูกค้า</span>
+                        </button>
+                      )}
+
+                      {booking.status === 'in_progress' && (
+                        <button
+                          type="button"
+                          onClick={() => handleCompleteTrip(booking.id)}
+                          className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>สิ้นสุดบริการและส่งลูกค้าเรียบร้อย</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -584,7 +755,7 @@ export default function CompanionDashboardPage() {
             completedJobs.map((booking) => (
               <div
                 key={booking.id}
-                className="bg-white p-5 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs"
+                className="bg-white p-5 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
               >
                 <div>
                   <h4 className="font-bold text-slate-900 text-sm">{booking.title}</h4>
@@ -593,11 +764,21 @@ export default function CompanionDashboardPage() {
                     {booking.destination_location}
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="font-bold text-emerald-600 text-sm">
-                    +฿{booking.estimated_cost.toLocaleString()}
-                  </span>
-                  <p className="text-[10px] text-slate-400">สำเร็จ</p>
+                <div className="flex items-center justify-between sm:justify-end gap-3">
+                  <div className="text-right">
+                    <span className="font-bold text-emerald-600 text-sm">
+                      +฿{booking.estimated_cost.toLocaleString()}
+                    </span>
+                    <p className="text-[10px] text-slate-400">สำเร็จ</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBookingDetails(booking)}
+                    className="min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-slate-500" />
+                    <span>ดูรายละเอียด</span>
+                  </button>
                 </div>
               </div>
             ))
@@ -608,6 +789,316 @@ export default function CompanionDashboardPage() {
           )}
         </div>
       )}
+
+      {/* Full Request Details Modal */}
+      {selectedBookingDetails && (() => {
+        const b = selectedBookingDetails;
+        const bCustomer = allProfiles.find((p) => p.id === b.customer_id) || INITIAL_PROFILES[b.customer_id];
+        const bCategory = categories.find((c) => c.id === b.service_category_id);
+        const isSelf = Boolean(currentUser && b.customer_id === currentUser.id);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col">
+              {/* Header */}
+              <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-4 sticky top-0 bg-white/95 backdrop-blur-md z-10">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                    {bCategory && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {bCategory.name}
+                      </span>
+                    )}
+                    <StatusBadge status={b.status} />
+                    {b.is_for_other && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        จองให้ผู้อื่น
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-black text-slate-900">{b.title}</h2>
+                  <p className="text-xs text-slate-500">
+                    รหัสคำขอ: #{b.id.slice(0, 8)} • ส่งคำขอเมื่อ {b.created_at ? new Date(b.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'ไม่ระบุ'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBookingDetails(null)}
+                  className="p-2 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition shrink-0 cursor-pointer"
+                  aria-label="ปิด"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-5 sm:p-6 space-y-6 text-slate-800">
+                {/* Section 1: Errand Details */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    รายละเอียดงานและธุระที่ลูกค้าต้องการให้ช่วย
+                  </h3>
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                    <p className="text-sm text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
+                      {b.description || 'ไม่ได้ระบุรายละเอียดเพิ่มเติม'}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-200/60 text-xs text-slate-600">
+                      <div>
+                        <span className="text-slate-400">ระยะเวลาโดยประมาณ:</span>{' '}
+                        <strong className="text-slate-800">{b.duration_hours} ชั่วโมง</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">ค่าบริการสุทธิที่จะได้รับ:</span>{' '}
+                        <strong className="text-emerald-600 font-bold">฿{b.estimated_cost.toLocaleString()}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Customer & Passenger Info */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-emerald-600" />
+                    ข้อมูลผู้ว่าจ้างและผู้รับบริการ
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Customer Box */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                      <span className="font-bold text-slate-500 block text-[11px]">ข้อมูลผู้ว่าจ้าง (ผู้ติดต่อหลัก)</span>
+                      <p className="font-bold text-slate-900 text-sm">{bCustomer?.full_name || 'ลูกค้า Care Companion'}</p>
+                      {bCustomer?.phone ? (
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                          <a href={`tel:${bCustomer.phone}`} className="font-bold text-emerald-600 hover:underline">
+                            {bCustomer.phone}
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">ไม่ได้ระบุเบอร์โทร</span>
+                      )}
+                      {bCustomer?.email && (
+                        <p className="text-slate-500 text-[11px] truncate">อีเมล: {bCustomer.email}</p>
+                      )}
+                    </div>
+
+                    {/* Passenger Box */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                      <span className="font-bold text-slate-500 block text-[11px]">ข้อมูลผู้เดินทาง / ผู้รับบริการ</span>
+                      <p className="font-bold text-slate-900 text-sm">
+                        {b.passenger_name || bCustomer?.full_name || 'ลูกค้า'}
+                      </p>
+                      <div className="flex flex-wrap gap-2 text-slate-600">
+                        <span>อายุ: <strong className="text-slate-800">{b.passenger_age ? `${b.passenger_age} ปี` : 'ไม่ได้ระบุ'}</strong></span>
+                        <span>•</span>
+                        <span>เพศ: <strong className="text-slate-800">{b.passenger_gender || 'ไม่ได้ระบุ'}</strong></span>
+                      </div>
+                      <p className="text-slate-500 text-[11px]">
+                        สถานะ: {b.is_for_other ? 'ผู้ว่าจ้างจองให้ผู้อื่น' : 'ผู้ว่าจ้างเดินทางด้วยตนเอง'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Health & Care & Emergency Contact */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Activity className="w-4 h-4 text-emerald-600" />
+                    สภาพร่างกายและการช่วยเหลือพิเศษ
+                  </h3>
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+                      <span className="text-slate-600">ความพร้อมทางร่างกาย (Mobility):</span>
+                      <span className="font-bold text-slate-800">
+                        {b.mobility_level === 'wheelchair' && '♿ นั่งวีลแชร์ (ต้องช่วยพยุงและเข็น)'}
+                        {b.mobility_level === 'needs_cane' && '🦯 ใช้ไม้เท้า / ต้องช่วยพยุงเดิน'}
+                        {b.mobility_level === 'independent' && '🚶 เดินได้คล่องตัวตามปกติ'}
+                        {b.mobility_level === 'bedridden' && '🛏️ ติดเตียง / ต้องการการดูแลใกล้ชิด'}
+                        {(!b.mobility_level || b.mobility_level === 'other') && 'ทั่วไป'}
+                      </span>
+                    </div>
+
+                    {/* Emergency Contact */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+                      <span className="text-slate-600 flex items-center gap-1">
+                        <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                        ผู้ติดต่อกรณีฉุกเฉิน:
+                      </span>
+                      {b.emergency_contact_phone ? (
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-800">
+                            {b.emergency_contact_name || 'ผู้ติดต่อฉุกเฉิน'}
+                          </span>
+                          <a
+                            href={`tel:${b.emergency_contact_phone}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold border border-rose-200 hover:bg-rose-100"
+                          >
+                            <Phone className="w-3 h-3" />
+                            {b.emergency_contact_phone}
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">ไม่ได้ระบุ</span>
+                      )}
+                    </div>
+
+                    {/* Medical Notes */}
+                    <div>
+                      <span className="font-bold text-rose-800 block mb-1 flex items-center gap-1">
+                        <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
+                        โรคประจำตัว / ยาที่ต้องรับประทาน / อาการที่ต้องระวัง:
+                      </span>
+                      <p className="text-slate-700 bg-white p-3 rounded-xl border border-rose-100 whitespace-pre-wrap leading-relaxed">
+                        {b.medical_notes || 'ไม่มีข้อมูลโรคประจำตัวหรือยาพิเศษ'}
+                      </p>
+                    </div>
+
+                    {/* Special Notes */}
+                    {b.special_notes && (
+                      <div>
+                        <span className="font-bold text-amber-800 block mb-1">
+                          หมายเหตุหรือคำแนะนำเพิ่มเติมจากลูกค้า:
+                        </span>
+                        <p className="text-slate-700 bg-white p-3 rounded-xl border border-amber-100 whitespace-pre-wrap leading-relaxed">
+                          {b.special_notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section 4: Travel & Route */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Compass className="w-4 h-4 text-emerald-600" />
+                    การเดินทางและเวลานัดหมาย
+                  </h3>
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+                      <div>
+                        <span className="text-slate-500">วันนัดหมาย:</span>{' '}
+                        <strong className="text-slate-900">{b.scheduled_date}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">เวลา:</span>{' '}
+                        <strong className="text-slate-900">{b.scheduled_time} น.</strong>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                        <div>
+                          <span className="text-[11px] text-slate-400 font-bold block">จุดรับ (ต้นทาง):</span>
+                          <span className="text-slate-900 font-medium">{b.origin_location}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500 mt-1 shrink-0" />
+                        <div>
+                          <span className="text-[11px] text-slate-400 font-bold block">ปลายทาง:</span>
+                          <span className="text-slate-900 font-medium">{b.destination_location}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&origin=Current+Location&destination=${encodeURIComponent(b.origin_location)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition text-[11px]"
+                      >
+                        <Navigation className="w-3.5 h-3.5 text-blue-600" />
+                        <span>เปิด Google Maps นำทางไปจุดรับ</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="p-5 sm:p-6 border-t border-slate-100 bg-slate-50/80 rounded-b-3xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedBookingDetails(null)}
+                  className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition cursor-pointer"
+                >
+                  ปิดหน้าต่าง
+                </button>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  {b.status === 'pending' && !isSelf && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedBookingDetails(null);
+                          handleDecline(b.id);
+                        }}
+                        className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 transition cursor-pointer"
+                      >
+                        ปฏิเสธคำขอ
+                      </button>
+                      {companionProfile.is_verified ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedBookingDetails(null);
+                            handleAccept(b.id);
+                          }}
+                          className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>ตอบรับงานนี้</span>
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          type="button"
+                          className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                          <span>รอแอดมินอนุมัติก่อน</span>
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {b.status === 'accepted' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedBookingDetails(null);
+                        handleStartTrip(b.id);
+                      }}
+                      className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      <span>เริ่มการเดินทาง / ไปพบลูกค้า</span>
+                    </button>
+                  )}
+
+                  {b.status === 'in_progress' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedBookingDetails(null);
+                        handleCompleteTrip(b.id);
+                      }}
+                      className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>สิ้นสุดบริการและส่งลูกค้าเรียบร้อย</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Action Confirmation & Alert Modal */}
       <ConfirmModal

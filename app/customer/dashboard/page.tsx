@@ -21,7 +21,9 @@ import {
   MessageSquare,
   ArrowRight,
   LogIn,
-  Phone
+  Phone,
+  HeartPulse,
+  ShieldAlert
 } from 'lucide-react';
 import { Booking } from '@/lib/types';
 
@@ -114,14 +116,14 @@ export default function CustomerDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Customer Header */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-blue-500/20">
+      <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-blue-500/20 shrink-0">
             {currentUser?.full_name ? currentUser.full_name.charAt(0) : 'ค'}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-slate-900">{currentUser?.full_name}</h1>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900">{currentUser?.full_name}</h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                 ลูกค้า (Customer)
               </span>
@@ -134,7 +136,7 @@ export default function CustomerDashboardPage() {
 
         <Link
           href="/bookings/new"
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-md shadow-blue-600/20"
+          className="w-full sm:w-auto min-h-[46px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-md shadow-blue-600/20 cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
           <span>สร้างคำขอบริการใหม่</span>
@@ -142,10 +144,10 @@ export default function CustomerDashboardPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 no-scrollbar">
         <button
           onClick={() => setActiveTab('active')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`shrink-0 min-h-[44px] pb-2 px-3 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-2 cursor-pointer ${
             activeTab === 'active'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -159,7 +161,7 @@ export default function CustomerDashboardPage() {
 
         <button
           onClick={() => setActiveTab('history')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`shrink-0 min-h-[44px] pb-2 px-3 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-2 cursor-pointer ${
             activeTab === 'history'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -258,6 +260,52 @@ export default function CustomerDashboardPage() {
                   </div>
                 </div>
 
+                {/* Passenger & Emergency Care Info */}
+                {(booking.passenger_name || booking.passenger_age || booking.emergency_contact_phone || booking.mobility_level) && (
+                  <div className="text-xs bg-blue-50/60 p-3.5 rounded-2xl border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-blue-950 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-blue-600" />
+                        ผู้รับบริการ: {booking.passenger_name || 'ลูกค้า'}
+                        {booking.passenger_age ? ` (อายุ ${booking.passenger_age} ปี)` : ''}
+                      </span>
+                      {booking.is_for_other && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                          จองให้ผู้อื่น
+                        </span>
+                      )}
+                      {booking.mobility_level && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white border border-blue-200 text-blue-800">
+                          {booking.mobility_level === 'wheelchair' && '♿ นั่งวีลแชร์'}
+                          {booking.mobility_level === 'needs_cane' && '🦯 ใช้ไม้เท้า/พยุง'}
+                          {booking.mobility_level === 'independent' && '🚶 เดินคล่องปกติ'}
+                          {booking.mobility_level === 'bedridden' && '🛏️ ดูแลใกล้ชิด'}
+                        </span>
+                      )}
+                    </div>
+
+                    {booking.emergency_contact_phone && (
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-600 shrink-0">
+                        <ShieldAlert className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span>ติดต่อฉุกเฉิน:</span>
+                        <a href={`tel:${booking.emergency_contact_phone}`} className="font-bold text-rose-700 hover:underline">
+                          {booking.emergency_contact_name ? `${booking.emergency_contact_name} ` : ''}({booking.emergency_contact_phone})
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Medical Notes if any */}
+                {booking.medical_notes && (
+                  <div className="text-xs text-slate-700 bg-rose-50/60 p-3 rounded-xl border border-rose-100 flex items-start gap-2">
+                    <HeartPulse className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <span>
+                      <strong className="text-rose-900">ข้อมูลสุขภาพ/ยา:</strong> {booking.medical_notes}
+                    </span>
+                  </div>
+                )}
+
                 {/* Special Notes if any */}
                 {booking.special_notes && (
                   <div className="text-xs text-slate-600 bg-amber-50/60 p-3 rounded-xl border border-amber-100 flex items-start gap-2">
@@ -269,13 +317,13 @@ export default function CustomerDashboardPage() {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2">
                   {companionProfile?.phone && (booking.status === 'accepted' || booking.status === 'in_progress') && (
                     <a
                       href={`tel:${companionProfile.phone}`}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition flex items-center gap-1.5 shadow-2xs"
+                      className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] justify-center rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
                     >
-                      <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                      <Phone className="w-4 h-4 text-emerald-600" />
                       <span>โทรหาผู้ช่วย ({companionProfile.phone})</span>
                     </a>
                   )}
@@ -283,7 +331,7 @@ export default function CustomerDashboardPage() {
                   {booking.status === 'pending' && (
                     <button
                       onClick={() => handleCancelBooking(booking.id)}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 transition"
+                      className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] justify-center rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 transition active:scale-[0.98]"
                     >
                       ยกเลิกคำขอ
                     </button>
@@ -292,16 +340,16 @@ export default function CustomerDashboardPage() {
                   {booking.status === 'completed' && !hasReviewed && (
                     <button
                       onClick={() => handleOpenReviewModal(booking)}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-1.5"
+                      className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] justify-center rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-[0.98]"
                     >
-                      <Star className="w-3.5 h-3.5 fill-white" />
+                      <Star className="w-4 h-4 fill-white" />
                       เขียนรีวิวและให้คะแนนดาว
                     </button>
                   )}
 
                   {booking.status === 'completed' && hasReviewed && (
-                    <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span className="text-xs text-emerald-600 font-semibold flex items-center justify-center sm:justify-start gap-1 py-1">
+                      <CheckCircle2 className="w-4 h-4" />
                       ให้คะแนนรีวิวแล้ว ขอบคุณครับ
                     </span>
                   )}

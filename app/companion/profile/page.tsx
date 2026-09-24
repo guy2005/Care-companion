@@ -379,7 +379,7 @@ export default function CompanionProfilePage() {
           <button
             type="submit"
             disabled={isSaving}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 transition shadow-md shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 transition shadow-md shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูลบริการ'}</span>

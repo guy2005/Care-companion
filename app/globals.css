@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -12,15 +12,57 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom glowing pulse for active indicators */
+@keyframes neon-glow-blue {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.8), 0 0 16px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(37, 99, 235, 1), 0 0 24px rgba(59, 130, 246, 0.8);
+  }
+}
+
+@keyframes neon-glow-emerald {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(5, 150, 105, 0.8), 0 0 16px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(5, 150, 105, 1), 0 0 24px rgba(16, 185, 129, 0.8);
+  }
+}
+
+@keyframes neon-glow-purple {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(147, 51, 234, 0.8), 0 0 16px rgba(168, 85, 247, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(147, 51, 234, 1), 0 0 24px rgba(168, 85, 247, 0.8);
+  }
+}
+
+.glow-active-blue {
+  animation: neon-glow-blue 2s infinite ease-in-out;
+}
+
+.glow-active-emerald {
+  animation: neon-glow-emerald 2s infinite ease-in-out;
+}
+
+.glow-active-purple {
+  animation: neon-glow-purple 2s infinite ease-in-out;
+}
+
+/* Hide scrollbar for clean horizontal tab lists on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

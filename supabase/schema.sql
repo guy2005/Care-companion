@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     phone TEXT,
     avatar_url TEXT,
     role TEXT CHECK (role IN ('customer', 'companion', 'admin')) DEFAULT 'customer',
+    age INT,
+    gender TEXT,
+    emergency_contact_name TEXT,
+    emergency_contact_phone TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -68,6 +72,15 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     duration_hours NUMERIC(4, 2) DEFAULT 2.0 NOT NULL,
     estimated_cost NUMERIC(10, 2) DEFAULT 500.00 NOT NULL,
     special_notes TEXT,
+    -- Customer & Passenger Care Info
+    is_for_other BOOLEAN DEFAULT FALSE,
+    passenger_name TEXT,
+    passenger_age INT,
+    passenger_gender TEXT,
+    mobility_level TEXT DEFAULT 'independent',
+    emergency_contact_name TEXT,
+    emergency_contact_phone TEXT,
+    medical_notes TEXT,
     status TEXT CHECK (status IN ('pending', 'accepted', 'in_progress', 'completed', 'cancelled')) DEFAULT 'pending' NOT NULL,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL

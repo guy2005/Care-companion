@@ -53,12 +53,12 @@ export default function CompanionDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
       {/* Back Button */}
       <div>
         <Link
           href="/companions"
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-600 transition"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-600 transition min-h-[36px]"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>กลับไปค้นหาผู้ร่วมเดินทาง</span>
@@ -66,12 +66,12 @@ export default function CompanionDetailPage({ params }: PageProps) {
       </div>
 
       {/* Main Grid: Profile Info + Booking Action Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
         {/* Left 2 Cols: Details & Reviews */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
           {/* Profile Header Box */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
               <div className="relative">
                 <Image
                   src={
@@ -81,7 +81,7 @@ export default function CompanionDetailPage({ params }: PageProps) {
                   alt={profile.full_name}
                   width={96}
                   height={96}
-                  className="w-24 h-24 rounded-3xl object-cover ring-4 ring-blue-50 shadow-md"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover ring-4 ring-blue-50 shadow-md"
                   unoptimized
                 />
                 {companion.is_verified && (

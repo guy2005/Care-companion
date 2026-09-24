@@ -53,30 +53,30 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-16 pb-20">
+    <div className="space-y-12 sm:space-y-16 pb-16 sm:pb-20">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/70 via-white to-slate-50 pt-12 pb-20 border-b border-slate-100">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/70 via-white to-slate-50 pt-8 sm:pt-12 pb-14 sm:pb-20 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold shadow-2xs">
-              <ShieldCheck className="w-4 h-4" />
-              <span>ผู้ช่วยร่วมเดินทางที่ตรวจสอบประวัติแล้ว ปลอดภัย อุ่นใจทุกเส้นทาง</span>
+          <div className="text-center max-w-3xl mx-auto space-y-3 sm:space-y-4">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] sm:text-xs font-semibold shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>ผู้ช่วยร่วมเดินทางที่ตรวจสอบประวัติแล้ว ปลอดภัย อุ่นใจ</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-              ไปทำธุระได้อย่างมั่นใจ <br />
-              มี <span className="text-blue-600">Care Companion</span> ร่วมเดินทางเคียงข้าง
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-snug sm:leading-tight">
+              ไปทำธุระได้อย่างมั่นใจ <br className="hidden sm:inline" />
+              มี <span className="text-blue-600">Care Companion</span> เคียงข้างคุณ
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto">
               แพลตฟอร์มจัดหาผู้ช่วยร่วมเดินทางสำหรับผู้สูงอายุและผู้ที่ต้องการความสะดวก 
               ช่วยพาไปพบแพทย์ตามนัด ติดต่อธนาคาร หน่วยงานราชการ หรือซื้อของนอกบ้าน
             </p>
           </div>
 
           {/* Quick Search Card */}
-          <div className="mt-8 max-w-4xl mx-auto bg-white rounded-3xl p-4 sm:p-6 shadow-xl shadow-blue-500/5 border border-slate-200/80">
-            <form onSubmit={handleQuickSearch} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="mt-6 sm:mt-8 max-w-4xl mx-auto bg-white rounded-3xl p-4 sm:p-6 shadow-xl shadow-blue-500/5 border border-slate-200/80">
+            <form onSubmit={handleQuickSearch} className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <Compass className="w-4 h-4 text-blue-600" />
@@ -86,7 +86,7 @@ export default function HomePage() {
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   aria-label="เลือกประเภทของธุระ"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">ทุกประเภทธุระ</option>
                   {categories.map((c) => (
@@ -107,14 +107,14 @@ export default function HomePage() {
                   placeholder="เช่น พญาไท, บางนา, จตุจักร..."
                   value={selectedArea}
                   onChange={(e) => setSelectedArea(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-sm text-slate-800 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="flex items-end">
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-md shadow-blue-600/20"
+                  className="w-full min-h-[46px] flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-md shadow-blue-600/20 cursor-pointer"
                 >
                   <Search className="w-4 h-4" />
                   <span>ค้นหาผู้ร่วมเดินทาง</span>
@@ -122,9 +122,9 @@ export default function HomePage() {
               </div>
             </form>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-500 text-center sm:text-left">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                 มีผู้ช่วยพร้อมบริการกว่า 50+ พื้นที่
               </span>
               <Link
@@ -137,44 +137,44 @@ export default function HomePage() {
           </div>
 
           {/* Value Props Row */}
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                <ShieldCheck className="w-5 h-5" />
+          <div className="mt-8 sm:mt-12 grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 max-w-5xl mx-auto">
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800">ยืนยันตัวตนแล้ว</p>
-                <p className="text-[11px] text-slate-500">ผ่านการตรวจบัตร ปชช.</p>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800">ตรงต่อเวลา</p>
-                <p className="text-[11px] text-slate-500">นัดหมายล่วงหน้าได้</p>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">ยืนยันตัวตนแล้ว</p>
+                <p className="text-[11px] text-slate-500 truncate">ตรวจบัตร ปชช.</p>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
-                <Star className="w-5 h-5" />
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800">รีวิวตามจริง</p>
-                <p className="text-[11px] text-slate-500">จากลูกค้าที่ใช้บริการ</p>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">ตรงต่อเวลา</p>
+                <p className="text-[11px] text-slate-500 truncate">นัดหมายล่วงหน้า</p>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
-                <HeartHandshake className="w-5 h-5" />
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800">สุภาพ เอาใจใส่</p>
-                <p className="text-[11px] text-slate-500">เข้าใจความต้องการ</p>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">รีวิวตามจริง</p>
+                <p className="text-[11px] text-slate-500 truncate">จากลูกค้าจริง</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
+                <HeartHandshake className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">สุภาพ เอาใจใส่</p>
+                <p className="text-[11px] text-slate-500 truncate">เข้าใจผู้สูงวัย</p>
               </div>
             </div>
           </div>

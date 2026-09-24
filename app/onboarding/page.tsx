@@ -42,13 +42,13 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-lg w-full bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+    <div className="min-h-[80vh] flex items-center justify-center py-6 sm:py-12 px-3.5 sm:px-6 lg:px-8">
+      <div className="max-w-lg w-full bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl space-y-6">
         <div className="text-center space-y-2">
           <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center text-white">
             <HeartHandshake className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-black text-slate-900">ยินดีต้อนรับสู่ Care Companion</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">ยินดีต้อนรับสู่ Care Companion</h1>
           <p className="text-xs text-slate-500">
             โปรดเลือกบทบาทการใช้งานของคุณเพื่อเริ่มต้นสร้างโปรไฟล์
           </p>
@@ -56,10 +56,10 @@ export default function OnboardingPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Role Choice Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div
               onClick={() => setSelectedRole('customer')}
-              className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between ${
+              className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between ${
                 selectedRole === 'customer'
                   ? 'border-blue-600 bg-blue-50/50'
                   : 'border-slate-200 hover:border-slate-300'
@@ -69,7 +69,7 @@ export default function OnboardingPage() {
                 <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3">
                   <User className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">ลูกค้า (Customer)</h3>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900">ลูกค้า (Customer)</h3>
                 <p className="text-xs text-slate-500 mt-1">
                   สำหรับผู้ที่ต้องการหาผู้ช่วยร่วมเดินทาง เช่น ผู้สูงอายุ หรือผู้ทำธุระนอกบ้าน
                 </p>
@@ -82,7 +82,7 @@ export default function OnboardingPage() {
 
             <div
               onClick={() => setSelectedRole('companion')}
-              className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between ${
+              className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between ${
                 selectedRole === 'companion'
                   ? 'border-emerald-600 bg-emerald-50/50'
                   : 'border-slate-200 hover:border-slate-300'
@@ -92,7 +92,7 @@ export default function OnboardingPage() {
                 <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3">
                   <Users className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">ผู้ร่วมเดินทาง (Companion)</h3>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900">ผู้ร่วมเดินทาง (Companion)</h3>
                 <p className="text-xs text-slate-500 mt-1">
                   สำหรับผู้ที่ต้องการให้บริการร่วมเดินทางและดูแลความสะดวกในการทำธุระ
                 </p>
@@ -113,7 +113,7 @@ export default function OnboardingPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="เช่น นายสมชาย ใจดี"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
 
@@ -132,7 +132,7 @@ export default function OnboardingPage() {
                   maxLength={12}
                   value={phone}
                   onChange={handlePhoneChange}
-                  className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 font-mono tracking-wider transition ${
+                  className={`w-full min-h-[46px] pl-10 pr-3.5 py-2.5 rounded-xl border text-base sm:text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 font-mono tracking-wider transition ${
                     phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : 'border-slate-200 focus:ring-blue-500'
                   }`}
                 />
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 transition shadow-md shadow-blue-600/20"
+            className="w-full min-h-[48px] flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 transition shadow-md shadow-blue-600/20 cursor-pointer"
           >
             <span>ดำเนินการต่อ</span>
             <ArrowRight className="w-4 h-4" />

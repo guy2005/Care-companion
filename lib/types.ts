@@ -2,6 +2,8 @@ export type UserRole = 'customer' | 'companion' | 'admin';
 
 export type BookingStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
 
+export type MobilityLevel = 'independent' | 'needs_cane' | 'wheelchair' | 'bedridden' | 'other';
+
 export interface Profile {
   id: string;
   email: string;
@@ -9,6 +11,10 @@ export interface Profile {
   phone?: string;
   avatar_url?: string;
   role: UserRole;
+  age?: number;
+  gender?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -51,6 +57,15 @@ export interface Booking {
   duration_hours: number;
   estimated_cost: number;
   special_notes?: string;
+  // Customer & Passenger Care Information
+  is_for_other?: boolean;
+  passenger_name?: string;
+  passenger_age?: number;
+  passenger_gender?: string;
+  mobility_level?: MobilityLevel;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  medical_notes?: string;
   status: BookingStatus;
   created_at: string;
   updated_at?: string;

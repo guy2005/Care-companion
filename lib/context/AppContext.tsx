@@ -138,6 +138,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...b,
           duration_hours: Number(b.duration_hours) || 2.0,
           estimated_cost: Number(b.estimated_cost) || 500,
+          is_for_other: Boolean(b.is_for_other),
+          passenger_age: b.passenger_age ? Number(b.passenger_age) : undefined,
+          mobility_level: b.mobility_level || 'independent',
         }));
 
         // Merge: Supabase real bookings first, then initial mock bookings
@@ -444,6 +447,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             duration_hours: newBookingData.duration_hours,
             estimated_cost: newBookingData.estimated_cost,
             special_notes: newBookingData.special_notes || '',
+            is_for_other: Boolean(newBookingData.is_for_other),
+            passenger_name: newBookingData.passenger_name || null,
+            passenger_age: newBookingData.passenger_age ? Number(newBookingData.passenger_age) : null,
+            passenger_gender: newBookingData.passenger_gender || null,
+            mobility_level: newBookingData.mobility_level || 'independent',
+            emergency_contact_name: newBookingData.emergency_contact_name || null,
+            emergency_contact_phone: newBookingData.emergency_contact_phone || null,
+            medical_notes: newBookingData.medical_notes || null,
             status: 'pending',
           })
           .select()

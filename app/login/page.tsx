@@ -86,14 +86,14 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50/50 to-slate-50">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl shadow-blue-500/5">
+    <div className="min-h-[80vh] flex items-center justify-center py-6 sm:py-12 px-3.5 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50/50 to-slate-50">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8 bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl shadow-blue-500/5">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-            <HeartHandshake className="w-8 h-8" />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+            <HeartHandshake className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">เข้าสู่ระบบ Care Companion</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">เข้าสู่ระบบ Care Companion</h2>
           <p className="text-xs text-slate-500">
             ระบบเชื่อมต่อด้วย Supabase Authentication และ Google Account
           </p>
@@ -108,7 +108,7 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => setSelectedRole('customer')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
+              className={`min-h-[44px] py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
                 selectedRole === 'customer'
                   ? 'bg-blue-50 text-blue-700 border-blue-400 shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
@@ -119,7 +119,7 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => setSelectedRole('companion')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
+              className={`min-h-[44px] py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
                 selectedRole === 'companion'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-400 shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
@@ -130,7 +130,7 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => setSelectedRole('admin')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
+              className={`min-h-[44px] py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
                 selectedRole === 'admin'
                   ? 'bg-purple-50 text-purple-700 border-purple-400 shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
@@ -146,7 +146,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => { setAuthMethod('google'); setErrorMessage(''); }}
-            className={`flex-1 py-2 text-center border-b-2 transition ${
+            className={`flex-1 py-2.5 text-center border-b-2 transition ${
               authMethod === 'google'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -157,13 +157,13 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => { setAuthMethod('email'); setErrorMessage(''); }}
-            className={`flex-1 py-2 text-center border-b-2 transition ${
+            className={`flex-1 py-2.5 text-center border-b-2 transition ${
               authMethod === 'email'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Email / Password (Supabase)
+            Email / Password
           </button>
         </div>
 
@@ -187,9 +187,9 @@ function LoginForm() {
             <button
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm shadow-xs transition active:scale-[0.99] cursor-pointer disabled:opacity-50"
+              className="w-full min-h-[48px] flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm shadow-xs transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
@@ -229,7 +229,7 @@ function LoginForm() {
                   placeholder="เช่น นายสมชาย ใจดี"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
             )}
@@ -245,7 +245,7 @@ function LoginForm() {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
 
@@ -261,14 +261,14 @@ function LoginForm() {
                 placeholder="อย่างน้อย 6 ตัวอักษร"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 transition shadow-sm text-xs cursor-pointer disabled:opacity-50"
+              className="w-full min-h-[46px] py-2.5 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 transition shadow-sm text-xs cursor-pointer disabled:opacity-50"
             >
               {isLoading
                 ? 'กำลังดำเนินการ...'

@@ -27,6 +27,7 @@ function CompanionsList() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [availableOnly, setAvailableOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'rating' | 'price_asc' | 'experience'>('rating');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Filter logic
   const filteredCompanions = useMemo(() => {
@@ -104,9 +105,23 @@ function CompanionsList() {
       </div>
 
       {/* Main Content Layout: Sidebar Filter + Results Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-8 items-start">
+        {/* Mobile Filter Toggle Button */}
+        <button
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="lg:hidden w-full min-h-[46px] flex items-center justify-between p-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs font-bold text-xs sm:text-sm text-slate-800 cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+            <span>ตัวกรองการค้นหา {verifiedOnly || availableOnly || keyword || selectedArea ? '• (มีตัวกรอง)' : ''}</span>
+          </span>
+          <span className="text-xs text-blue-600 font-bold bg-blue-50 px-2.5 py-1 rounded-lg">
+            {showMobileFilters ? 'ซ่อนตัวกรอง ▲' : 'ปรับแต่งตัวกรอง ▼'}
+          </span>
+        </button>
+
         {/* Filter Sidebar */}
-        <aside className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-6 lg:sticky lg:top-24">
+        <aside className={`${showMobileFilters ? 'block' : 'hidden lg:block'} bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-5 sm:space-y-6 lg:sticky lg:top-24`}>
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4 text-blue-600" />

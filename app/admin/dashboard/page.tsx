@@ -95,13 +95,13 @@ export default function AdminDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-800 via-purple-700 to-indigo-800 text-white p-6 sm:p-8 rounded-3xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-purple-800 via-purple-700 to-indigo-800 text-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-xs font-semibold backdrop-blur-xs">
             <ShieldCheck className="w-4 h-4" />
             แผงควบคุมระบบส่วนกลาง (Admin Console)
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black mt-2">
+          <h1 className="text-xl sm:text-3xl font-black mt-2">
             ภาพรวมและบริหารจัดการ Care Companion
           </h1>
           <p className="text-xs sm:text-sm text-purple-200 mt-1">
@@ -111,88 +111,88 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold">ผู้ใช้งานทั้งหมด</span>
-            <Users className="w-4 h-4 text-blue-600" />
+            <span className="text-[11px] sm:text-xs font-bold">ผู้ใช้งานทั้งหมด</span>
+            <Users className="w-4 h-4 text-blue-600 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">{totalUsers} บัญชี</div>
-          <p className="text-[11px] text-slate-400 mt-1">Customer & Companion</p>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1 sm:mt-2">{totalUsers} บัญชี</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">Customer & Companion</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold">Companion ที่อนุมัติแล้ว</span>
-            <UserCheck className="w-4 h-4 text-emerald-600" />
+            <span className="text-[11px] sm:text-xs font-bold">Companion อนุมัติแล้ว</span>
+            <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-emerald-600 mt-2">
+          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1 sm:mt-2">
             {verifiedCompanionsCount} / {companions.length} ท่าน
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">ผ่านการตรวจประวัติแล้ว</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">ผ่านการตรวจประวัติแล้ว</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold">คำขอนัดหมายทั้งหมด</span>
-            <Calendar className="w-4 h-4 text-purple-600" />
+            <span className="text-[11px] sm:text-xs font-bold">คำขอนัดหมาย</span>
+            <Calendar className="w-4 h-4 text-purple-600 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">{totalBookingsCount} รายการ</div>
-          <p className="text-[11px] text-slate-400 mt-1">เสร็จสิ้นแล้ว {completedBookingsCount} งาน</p>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1 sm:mt-2">{totalBookingsCount} รายการ</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">เสร็จสิ้นแล้ว {completedBookingsCount} งาน</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold">มูลค่าบริการรวมที่สำเร็จ</span>
-            <TrendingUp className="w-4 h-4 text-amber-500" />
+            <span className="text-[11px] sm:text-xs font-bold">มูลค่ารวมที่สำเร็จ</span>
+            <TrendingUp className="w-4 h-4 text-amber-500 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
+          <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1 sm:mt-2">
             ฿{totalPlatformVolume.toLocaleString()}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">สร้างรายได้ให้ผู้ร่วมเดินทาง</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">สร้างรายได้ให้ผู้ช่วย</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 sm:gap-3 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar whitespace-nowrap">
         <button
           onClick={() => setActiveTab('verification')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`pb-2 px-2.5 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-1.5 sm:gap-2 shrink-0 ${
             activeTab === 'verification'
               ? 'border-purple-600 text-purple-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <span>ตรวจสอบและอนุมัติ Companion</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">
+          <span>ตรวจสอบ Companion</span>
+          <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs bg-purple-100 text-purple-700">
             {companions.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('bookings')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`pb-2 px-2.5 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-1.5 sm:gap-2 shrink-0 ${
             activeTab === 'bookings'
               ? 'border-purple-600 text-purple-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <span>ติดตามคำขอการเดินทางทั้งหมด</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700">
+          <span>ติดตามคำขอทั้งหมด</span>
+          <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs bg-slate-100 text-slate-700">
             {bookings.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('users')}
-          className={`pb-2 px-2 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`pb-2 px-2.5 text-xs sm:text-sm font-bold transition border-b-2 flex items-center gap-1.5 sm:gap-2 shrink-0 ${
             activeTab === 'users'
               ? 'border-purple-600 text-purple-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <span>รายชื่อผู้ใช้งานในระบบ</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700">
+          <span>รายชื่อผู้ใช้งาน</span>
+          <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs bg-slate-100 text-slate-700">
             {totalUsers}
           </span>
         </button>
@@ -262,10 +262,10 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 self-end md:self-center">
+                    <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                       <button
                         onClick={() => toggleCompanionVerification(companion.id)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                        className={`w-full md:w-auto min-h-[44px] justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-[0.98] ${
                           companion.is_verified
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                             : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
@@ -296,14 +296,14 @@ export default function AdminDashboardPage() {
       {activeTab === 'bookings' && (
         <div className="space-y-4">
           {/* Filter Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-600">กรองตามสถานะ:</span>
+              <span className="text-xs font-bold text-slate-600 shrink-0">สถานะ:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 aria-label="กรองตามสถานะ"
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold bg-slate-50"
+                className="w-full sm:w-auto min-h-[42px] px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold bg-slate-50 focus:bg-white"
               >
                 <option value="all">ทั้งหมด ({bookings.length})</option>
                 <option value="pending">รอการตอบรับ (pending)</option>
@@ -314,14 +314,14 @@ export default function AdminDashboardPage() {
               </select>
             </div>
 
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
                 type="text"
                 placeholder="ค้นหาชื่อธุระ, จุดรับ, ปลายทาง..."
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
-                className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white"
+                className="w-full min-h-[42px] pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-xs bg-slate-50 focus:bg-white"
               />
             </div>
           </div>
@@ -336,20 +336,28 @@ export default function AdminDashboardPage() {
               return (
                 <div
                   key={booking.id}
-                  className="bg-white p-5 rounded-2xl border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs"
+                  className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                  <div className="space-y-1.5 w-full">
+                    <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
                       <h4 className="text-sm font-bold text-slate-900">{booking.title}</h4>
                       <StatusBadge status={booking.status} />
                     </div>
-                    <div className="text-xs text-slate-600 flex flex-wrap items-center gap-3">
+                    <div className="text-xs text-slate-600 flex flex-wrap items-center gap-2 sm:gap-3">
                       <span>👤 ผู้จอง: {customer?.full_name || 'ลูกค้า'}</span>
-                      <span>•</span>
+                      {booking.passenger_name && booking.passenger_name !== customer?.full_name && (
+                        <>
+                          <span className="hidden sm:inline">•</span>
+                          <span className="text-purple-700 font-semibold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                            ผู้รับบริการ: {booking.passenger_name} {booking.passenger_age ? `(อายุ ${booking.passenger_age} ปี)` : ''}
+                          </span>
+                        </>
+                      )}
+                      <span className="hidden sm:inline">•</span>
                       <span>
                         🤝 ผู้ช่วย: {companion ? companion.full_name : 'ยังไม่มีผู้รับงาน'}
                       </span>
-                      <span>•</span>
+                      <span className="hidden sm:inline">•</span>
                       <span>📅 {booking.scheduled_date} ({booking.duration_hours} ชม.)</span>
                     </div>
                     <p className="text-xs text-slate-500">
@@ -357,14 +365,14 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 self-end md:self-center">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full md:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                     <span className="font-bold text-blue-600 text-sm">
                       ฿{booking.estimated_cost.toLocaleString()}
                     </span>
                     {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                       <button
                         onClick={() => setCancelBookingId(booking.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 cursor-pointer"
+                        className="px-3.5 py-2 min-h-[40px] rounded-lg text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 cursor-pointer active:scale-[0.98]"
                       >
                         ยกเลิกงาน
                       </button>
