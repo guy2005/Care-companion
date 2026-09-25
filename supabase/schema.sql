@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS public.companion_profiles (
     hourly_rate NUMERIC(10, 2) DEFAULT 250.00,
     is_verified BOOLEAN DEFAULT FALSE,
     verification_doc_url TEXT,
+    id_card_url TEXT,
+    driver_license_url TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     rating_avg NUMERIC(3, 2) DEFAULT 5.00,
     rating_count INT DEFAULT 0,
@@ -73,6 +75,7 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     estimated_cost NUMERIC(10, 2) DEFAULT 500.00 NOT NULL,
     special_notes TEXT,
     -- Customer & Passenger Care Info
+    customer_phone TEXT,
     is_for_other BOOLEAN DEFAULT FALSE,
     passenger_name TEXT,
     passenger_age INT,

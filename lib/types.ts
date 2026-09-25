@@ -28,6 +28,8 @@ export interface CompanionProfile {
   hourly_rate: number;
   is_verified: boolean;
   verification_doc_url?: string;
+  id_card_url?: string;
+  driver_license_url?: string;
   is_available: boolean;
   rating_avg: number;
   rating_count: number;
@@ -58,6 +60,7 @@ export interface Booking {
   estimated_cost: number;
   special_notes?: string;
   // Customer & Passenger Care Information
+  customer_phone?: string;
   is_for_other?: boolean;
   passenger_name?: string;
   passenger_age?: number;

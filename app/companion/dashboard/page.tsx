@@ -421,7 +421,7 @@ export default function CompanionDashboardPage() {
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        ผู้จอง: {customer?.full_name || 'ลูกค้า Care Companion'} {isSelf ? '(คุณ)' : ''} • เบอร์โทร: {customer?.phone || '081-xxx-xxxx'}
+                        ผู้จอง: {customer?.full_name || 'ลูกค้า Care Companion'} {isSelf ? '(คุณ)' : ''} • เบอร์โทร: {booking.customer_phone || customer?.phone || 'ยังไม่ได้ระบุ'}
                       </p>
                     </div>
                     <div className="text-right">
@@ -618,7 +618,7 @@ export default function CompanionDashboardPage() {
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        ลูกค้า: {customer?.full_name} • โทร: {customer?.phone}
+                        ลูกค้า: {customer?.full_name} • โทร: {booking.customer_phone || customer?.phone || 'ยังไม่ได้ระบุ'}
                       </p>
                     </div>
                     <StatusBadge status={booking.status} />
@@ -867,11 +867,11 @@ export default function CompanionDashboardPage() {
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
                       <span className="font-bold text-slate-500 block text-[11px]">ข้อมูลผู้ว่าจ้าง (ผู้ติดต่อหลัก)</span>
                       <p className="font-bold text-slate-900 text-sm">{bCustomer?.full_name || 'ลูกค้า Care Companion'}</p>
-                      {bCustomer?.phone ? (
+                      {(b.customer_phone || bCustomer?.phone) ? (
                         <div className="flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                          <a href={`tel:${bCustomer.phone}`} className="font-bold text-emerald-600 hover:underline">
-                            {bCustomer.phone}
+                          <a href={`tel:${b.customer_phone || bCustomer?.phone}`} className="font-bold text-emerald-600 hover:underline">
+                            {b.customer_phone || bCustomer?.phone}
                           </a>
                         </div>
                       ) : (

@@ -102,6 +102,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             experience_years: Number(c.experience_years) || 0,
             rating_avg: Number(c.rating_avg) || 5.0,
             rating_count: Number(c.rating_count) || 0,
+            id_card_url: c.id_card_url || c.verification_doc_url || undefined,
+            driver_license_url: c.driver_license_url || undefined,
+            verification_doc_url: c.id_card_url || c.verification_doc_url || undefined,
           };
         });
 
@@ -134,14 +137,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .order('created_at', { ascending: false });
       if (!bookErr && bookData) {
-        const formattedBookings: Booking[] = bookData.map((b: any) => ({
-          ...b,
-          duration_hours: Number(b.duration_hours) || 2.0,
-          estimated_cost: Number(b.estimated_cost) || 500,
-          is_for_other: Boolean(b.is_for_other),
-          passenger_age: b.passenger_age ? Number(b.passenger_age) : undefined,
-          mobility_level: b.mobility_level || 'independent',
-        }));
+        const formattedBookings: Booking[] = bookData.map((b: any) => {
+          const cust = (profData as Profile[])?.find((p) => p.id === b.customer_id);
+          return {
+            ...b,
+            customer_phone: b.customer_phone || cust?.phone || undefined,
+            duration_hours: Number(b.duration_hours) || 2.0,
+            estimated_cost: Number(b.estimated_cost) || 500,
+            is_for_other: Boolean(b.is_for_other),
+            passenger_age: b.passenger_age ? Number(b.passenger_age) : undefined,
+            mobility_level: b.mobility_level || 'independent',
+          };
+        });
 
         // Merge: Supabase real bookings first, then initial mock bookings
         const realBookIds = new Set(formattedBookings.map((b) => b.id));
@@ -155,9 +162,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .order('created_at', { ascending: false });
       if (!revErr && revData) {
-        const realRevIds = new Set(revData.map((r: any) => r.id));
-        const remainingMockRevs = INITIAL_REVIEWS.filter((m) => !realRevIds.has(m.id));
-        setReviews([...(revData as Review[]), ...remainingMockRevs]);
+        const formattedReviews: Review[] = revData.map((r: any) => {
+          const cust =
+            (profData as Profile[])?.find((p) => p.id === r.customer_id) ||
+            INITIAL_PROFILES[r.customer_id];
+          return {
+            ...r,
+            customer: cust,
+          };
+        });
+        const realRevIds = new Set(formattedReviews.map((r) => r.id));
+        const remainingMockRevs = INITIAL_REVIEWS.filter((m) => !realRevIds.has(m.id)).map((m) => {
+          const cust =
+            m.customer ||
+            (profData as Profile[])?.find((p) => p.id === m.customer_id) ||
+            INITIAL_PROFILES[m.customer_id];
+          return {
+            ...m,
+            customer: cust,
+          };
+        });
+        setReviews([...formattedReviews, ...remainingMockRevs]);
       }
     } catch (err) {
       console.warn('Error fetching Supabase data:', err);
@@ -422,8 +447,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       throw new Error('ไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้ กรุณาเลือกผู้ช่วยท่านอื่น');
     }
 
+    // If customer provided a phone number, update their profile so the system remembers it
+    if (newBookingData.customer_phone) {
+      const phoneVal = newBookingData.customer_phone;
+      setCurrentUser((prev) => (prev ? { ...prev, phone: phoneVal } : prev));
+      setAllProfiles((prev) =>
+        prev.map((p) => (p.id === newBookingData.customer_id ? { ...p, phone: phoneVal } : p))
+      );
+      const supabase = createClient();
+      if (supabase && isUuid(newBookingData.customer_id)) {
+        try {
+          await supabase.from('profiles').update({ phone: phoneVal }).eq('id', newBookingData.customer_id);
+        } catch (e) {
+          console.warn('Could not update profile phone in Supabase', e);
+        }
+      }
+    }
+
     const newBooking: Booking = {
       ...newBookingData,
+      customer_phone: newBookingData.customer_phone || undefined,
       id: `book-${Date.now()}`,
       status: 'pending',
       created_at: new Date().toISOString(),
@@ -464,9 +507,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           newBooking.id = data.id;
         } else if (error) {
           console.error('Supabase booking insert error:', error.message);
+          throw new Error(`ไม่สามารถบันทึกคำขอได้: ${error.message}`);
         }
-      } catch (err) {
-        console.warn('Could not insert to Supabase, fallback to local', err);
+      } catch (err: any) {
+        console.error('Booking creation error:', err);
+        throw err;
       }
     }
 
@@ -532,11 +577,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addReview = async (reviewData: Omit<Review, 'id' | 'created_at'>) => {
+    const reviewerProfile =
+      allProfiles.find((p) => p.id === reviewData.customer_id) ||
+      (currentUser && currentUser.id === reviewData.customer_id ? currentUser : undefined) ||
+      INITIAL_PROFILES[reviewData.customer_id];
+
     const newReview: Review = {
       ...reviewData,
       id: `rev-${Date.now()}`,
       created_at: new Date().toISOString(),
-      customer: currentUser || undefined,
+      customer: reviewerProfile || currentUser || undefined,
     };
 
     setReviews((prev) => [newReview, ...prev]);
@@ -636,7 +686,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ? existingComp.is_available
           : true;
 
-      const { error } = await supabase.from('companion_profiles').upsert({
+      const upsertPayload: any = {
         id: companionId,
         bio: data.bio ?? (existingComp?.bio || ''),
         experience_years: data.experience_years ?? (existingComp?.experience_years || 0),
@@ -645,11 +695,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         hourly_rate: data.hourly_rate ?? (existingComp?.hourly_rate || 250),
         is_verified: isVerifiedVal,
         is_available: isAvailableVal,
-        verification_doc_url: data.verification_doc_url ?? existingComp?.verification_doc_url ?? null,
+        verification_doc_url: data.id_card_url ?? data.verification_doc_url ?? existingComp?.verification_doc_url ?? null,
+        id_card_url: data.id_card_url ?? existingComp?.id_card_url ?? null,
+        driver_license_url: data.driver_license_url ?? existingComp?.driver_license_url ?? null,
         updated_at: new Date().toISOString(),
-      });
+      };
+
+      const { error } = await supabase.from('companion_profiles').upsert(upsertPayload);
       if (error) {
-        console.error('Supabase updateCompanionProfile error:', error.message);
+        // If error occurred (e.g. columns not yet added via SQL migration), fallback without extra columns
+        console.warn('Upsert with separate doc columns failed, falling back:', error.message);
+        delete upsertPayload.id_card_url;
+        delete upsertPayload.driver_license_url;
+        const { error: fallbackErr } = await supabase.from('companion_profiles').upsert(upsertPayload);
+        if (fallbackErr) {
+          console.error('Supabase updateCompanionProfile fallback error:', fallbackErr.message);
+        }
       }
 
       if (phone !== undefined) {

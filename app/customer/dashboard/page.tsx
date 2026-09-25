@@ -129,7 +129,7 @@ export default function CustomerDashboardPage() {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              {currentUser?.email} • เบอร์ติดต่อ: {currentUser?.phone || '081-234-5678'}
+              {currentUser?.email}
             </p>
           </div>
         </div>

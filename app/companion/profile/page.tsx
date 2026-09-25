@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context/AppContext';
@@ -13,12 +13,19 @@ import {
   CheckCircle2, 
   ShieldCheck, 
   FileText, 
-  Upload,
-  AlertCircle,
-  LogIn,
-  Phone
+  Upload, 
+  AlertCircle, 
+  LogIn, 
+  Phone,
+  Eye,
+  Trash2,
+  Clock,
+  ShieldAlert,
+  CreditCard,
+  Car
 } from 'lucide-react';
-import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/formatters';
+import { formatPhoneNumber, isValidPhoneNumber, isUuid } from '@/lib/formatters';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CompanionProfilePage() {
   const router = useRouter();
@@ -58,6 +65,9 @@ export default function CompanionProfilePage() {
     is_available: true,
     rating_avg: 5.0,
     rating_count: 0,
+    verification_doc_url: undefined,
+    id_card_url: undefined,
+    driver_license_url: undefined,
   };
   const userDetails = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
 
@@ -73,6 +83,25 @@ export default function CompanionProfilePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // 1. National ID Card State
+  const idCardInputRef = useRef<HTMLInputElement>(null);
+  const [idCardUrl, setIdCardUrl] = useState<string>(companion.id_card_url || companion.verification_doc_url || '');
+  const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [idCardPreview, setIdCardPreview] = useState<string | null>(null);
+  const [idCardError, setIdCardError] = useState<string | null>(null);
+  const [isDraggingIdCard, setIsDraggingIdCard] = useState(false);
+
+  // 2. Driver's License State
+  const driverLicenseInputRef = useRef<HTMLInputElement>(null);
+  const [driverLicenseUrl, setDriverLicenseUrl] = useState<string>(companion.driver_license_url || '');
+  const [driverLicenseFile, setDriverLicenseFile] = useState<File | null>(null);
+  const [driverLicensePreview, setDriverLicensePreview] = useState<string | null>(null);
+  const [driverLicenseError, setDriverLicenseError] = useState<string | null>(null);
+  const [isDraggingDriverLicense, setIsDraggingDriverLicense] = useState(false);
+
+  // Full Preview Modal
+  const [previewModalDoc, setPreviewModalDoc] = useState<{ title: string; url: string } | null>(null);
+
   useEffect(() => {
     const active = companions.find((c) => c.id === currentUser.id);
     if (active) {
@@ -81,12 +110,62 @@ export default function CompanionProfilePage() {
       setHourlyRate(active.hourly_rate ?? 250);
       setSkills(active.skills || []);
       setServiceAreas(active.service_areas || []);
+      if (active.id_card_url || active.verification_doc_url) {
+        setIdCardUrl(active.id_card_url || active.verification_doc_url || '');
+      }
+      if (active.driver_license_url) {
+        setDriverLicenseUrl(active.driver_license_url);
+      }
     }
     const currentProf = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
     if (currentProf?.phone) {
       setPhone(formatPhoneNumber(currentProf.phone));
     }
   }, [companions, allProfiles, currentUser]);
+
+  // Load preview for existing ID Card
+  useEffect(() => {
+    if (idCardUrl && !idCardFile) {
+      if (idCardUrl.startsWith('http') || idCardUrl.startsWith('blob:') || idCardUrl.startsWith('data:')) {
+        setIdCardPreview(idCardUrl);
+      } else {
+        const supabase = createClient();
+        if (supabase) {
+          supabase.storage
+            .from('verification-docs')
+            .createSignedUrl(idCardUrl, 60 * 15)
+            .then(({ data }) => {
+              if (data?.signedUrl) {
+                setIdCardPreview(data.signedUrl);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    }
+  }, [idCardUrl, idCardFile]);
+
+  // Load preview for existing Driver's License
+  useEffect(() => {
+    if (driverLicenseUrl && !driverLicenseFile) {
+      if (driverLicenseUrl.startsWith('http') || driverLicenseUrl.startsWith('blob:') || driverLicenseUrl.startsWith('data:')) {
+        setDriverLicensePreview(driverLicenseUrl);
+      } else {
+        const supabase = createClient();
+        if (supabase) {
+          supabase.storage
+            .from('verification-docs')
+            .createSignedUrl(driverLicenseUrl, 60 * 15)
+            .then(({ data }) => {
+              if (data?.signedUrl) {
+                setDriverLicensePreview(data.signedUrl);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    }
+  }, [driverLicenseUrl, driverLicenseFile]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value, phone);
@@ -120,6 +199,70 @@ export default function CompanionProfilePage() {
     setServiceAreas(serviceAreas.filter((a) => a !== areaToRemove));
   };
 
+  // Helper file validator
+  const validateFile = (file: File): string | null => {
+    if (file.size > 5 * 1024 * 1024) {
+      return 'ขนาดไฟล์ต้องไม่เกิน 5 MB';
+    }
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      return 'รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG, WEBP) หรือไฟล์ PDF เท่านั้น';
+    }
+    return null;
+  };
+
+  // Process ID Card File
+  const processIdCardFile = (file: File) => {
+    const error = validateFile(file);
+    if (error) {
+      setIdCardError(error);
+      return;
+    }
+    setIdCardError(null);
+    setIdCardFile(file);
+    if (file.type.startsWith('image/')) {
+      setIdCardPreview(URL.createObjectURL(file));
+    } else {
+      setIdCardPreview('pdf');
+    }
+  };
+
+  const handleRemoveIdCard = () => {
+    setIdCardFile(null);
+    setIdCardPreview(null);
+    setIdCardUrl('');
+    setIdCardError(null);
+    if (idCardInputRef.current) {
+      idCardInputRef.current.value = '';
+    }
+  };
+
+  // Process Driver's License File
+  const processDriverLicenseFile = (file: File) => {
+    const error = validateFile(file);
+    if (error) {
+      setDriverLicenseError(error);
+      return;
+    }
+    setDriverLicenseError(null);
+    setDriverLicenseFile(file);
+    if (file.type.startsWith('image/')) {
+      setDriverLicensePreview(URL.createObjectURL(file));
+    } else {
+      setDriverLicensePreview('pdf');
+    }
+  };
+
+  const handleRemoveDriverLicense = () => {
+    setDriverLicenseFile(null);
+    setDriverLicensePreview(null);
+    setDriverLicenseUrl('');
+    setDriverLicenseError(null);
+    if (driverLicenseInputRef.current) {
+      driverLicenseInputRef.current.value = '';
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -131,7 +274,70 @@ export default function CompanionProfilePage() {
 
     setPhoneError(null);
     setIsSaving(true);
+    setIdCardError(null);
+    setDriverLicenseError(null);
+
     try {
+      const supabase = createClient();
+      let finalIdCardUrl = idCardUrl;
+      let finalDriverLicenseUrl = driverLicenseUrl;
+
+      // 1. Upload ID Card if changed
+      if (idCardFile) {
+        if (supabase && isUuid(currentUser.id)) {
+          const fileExt = idCardFile.name.split('.').pop() || 'jpg';
+          const filePath = `${currentUser.id}/id_card_${Date.now()}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('verification-docs')
+            .upload(filePath, idCardFile, { upsert: true });
+
+          if (uploadError) {
+            console.error('ID Card upload error:', uploadError.message);
+            setIdCardError(`อัปโหลดบัตรประชาชนไม่สำเร็จ: ${uploadError.message}`);
+            setIsSaving(false);
+            return;
+          }
+
+          finalIdCardUrl = filePath;
+          setIdCardUrl(filePath);
+        } else {
+          finalIdCardUrl = idCardPreview && idCardPreview !== 'pdf'
+            ? idCardPreview
+            : 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80';
+          setIdCardUrl(finalIdCardUrl);
+        }
+      }
+
+      // 2. Upload Driver's License if changed
+      if (driverLicenseFile) {
+        if (supabase && isUuid(currentUser.id)) {
+          const fileExt = driverLicenseFile.name.split('.').pop() || 'jpg';
+          const filePath = `${currentUser.id}/driver_license_${Date.now()}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('verification-docs')
+            .upload(filePath, driverLicenseFile, { upsert: true });
+
+          if (uploadError) {
+            console.error('Driver License upload error:', uploadError.message);
+            setDriverLicenseError(`อัปโหลดใบขับขี่ไม่สำเร็จ: ${uploadError.message}`);
+            setIsSaving(false);
+            return;
+          }
+
+          finalDriverLicenseUrl = filePath;
+          setDriverLicenseUrl(filePath);
+        } else {
+          finalDriverLicenseUrl = driverLicensePreview && driverLicensePreview !== 'pdf'
+            ? driverLicensePreview
+            : 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80';
+          setDriverLicenseUrl(finalDriverLicenseUrl);
+        }
+      }
+
+      const hasNewDocs = Boolean(idCardFile || driverLicenseFile);
+
       await updateCompanionProfile(
         currentUser.id,
         {
@@ -140,13 +346,24 @@ export default function CompanionProfilePage() {
           hourly_rate: hourlyRate,
           skills,
           service_areas: serviceAreas,
+          id_card_url: finalIdCardUrl || undefined,
+          driver_license_url: finalDriverLicenseUrl || undefined,
+          verification_doc_url: finalIdCardUrl || finalDriverLicenseUrl || undefined,
+          // When a new document is submitted, mark as pending verification for admin inspection
+          ...(hasNewDocs ? { is_verified: false } : {}),
         },
         phone.trim()
       );
+
+      setIdCardFile(null);
+      setIdCardError(null);
+      setDriverLicenseFile(null);
+      setDriverLicenseError(null);
       setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    } catch (err) {
+      setTimeout(() => setIsSaved(false), 3500);
+    } catch (err: any) {
       console.error('Error saving companion profile:', err);
+      alert(err?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     } finally {
       setIsSaving(false);
     }
@@ -356,22 +573,284 @@ export default function CompanionProfilePage() {
           </div>
         </div>
 
-        {/* Verification Document Info */}
-        <div className="pt-4 border-t border-slate-100 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-blue-600" />
-              เอกสารยืนยันตัวตน (บัตรประชาชน / ใบขับขี่)
-            </span>
-            {companion.is_verified ? (
-              <span className="text-[11px] font-bold text-emerald-600">อนุมัติแล้ว</span>
-            ) : (
-              <span className="text-[11px] font-bold text-amber-600">รอการตรวจสอบโดยแอดมิน</span>
-            )}
+        {/* Verification Documents Upload & Preview (2 Separate Documents) */}
+        <div className="pt-4 border-t border-slate-100 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-blue-600" />
+                เอกสารยืนยันตัวตน 2 รายการ (บัตรประชาชน / ใบขับขี่)
+              </label>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                ระบบแยกจัดเก็บไฟล์ 2 รายการอย่างชัดเจน เพื่อให้แอดมินตรวจสอบก่อนรับรองความปลอดภัยตามมาตรฐาน PDPA
+              </p>
+            </div>
+            <div>
+              {companion.is_verified ? (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  อนุมัติแล้ว (Verified)
+                </span>
+              ) : (idCardFile || idCardUrl || driverLicenseFile || driverLicenseUrl) ? (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  รอการตรวจสอบโดยแอดมิน
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                  <AlertCircle className="w-3.5 h-3.5 text-slate-500" />
+                  ยังไม่ได้แนบเอกสาร
+                </span>
+              )}
+            </div>
           </div>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            เอกสารจะถูกจัดเก็บใน Supabase Storage Bucket `verification-docs` อย่างปลอดภัยและเข้าถึงได้เฉพาะแอดมินเท่านั้น
-          </p>
+
+          {/* Privacy & Safety Callout */}
+          <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 text-[11px] text-blue-900 space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-blue-800">
+              <ShieldAlert className="w-3.5 h-3.5 text-blue-600" />
+              การคุ้มครองข้อมูลส่วนบุคคล (PDPA Notice):
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              เอกสารทั้ง 2 รายการจะถูกจัดเก็บใน Private Storage Bucket เข้าถึงได้เฉพาะแอดมินเท่านั้น (ลูกค้าภายนอกจะไม่เห็นเอกสารนี้) • 
+              <strong> คำแนะนำ:</strong> ท่านสามารถขีดฆ่า <em>&quot;ใช้เพื่อยืนยันตัวตน Care Companion เท่านั้น&quot;</em> หรือปิดทับข้อมูลศาสนาและกรุ๊ปเลือดได้
+            </p>
+          </div>
+
+          {/* 2-Column Grid for Uploads */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 1. National ID Card Card */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <CreditCard className="w-4 h-4 text-emerald-600" />
+                    1. ภาพถ่ายบัตรประชาชน (จำเป็น)
+                  </span>
+                  {(idCardFile || idCardUrl) ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                      แนบแล้ว
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                      จำเป็น
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  ใช้ตรวจสอบชื่อ-นามสกุล และความปลอดภัยก่อนรับงาน
+                </p>
+
+                {idCardPreview ? (
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="relative w-14 h-14 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center">
+                        {idCardPreview === 'pdf' ? (
+                          <FileText className="w-7 h-7 text-rose-500" />
+                        ) : (
+                          <img
+                            src={idCardPreview}
+                            alt="บัตรประชาชน"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-800 truncate">
+                          {idCardFile ? idCardFile.name : 'บัตรประชาชนในระบบ'}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {idCardFile ? `${(idCardFile.size / 1024).toFixed(1)} KB (ไฟล์ใหม่)` : 'บันทึกในระบบแล้ว'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      {idCardPreview !== 'pdf' && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewModalDoc({ title: 'ภาพถ่ายบัตรประชาชน', url: idCardPreview })}
+                          className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          ดูรูปขยาย
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleRemoveIdCard}
+                        className="py-1.5 px-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        เปลี่ยน
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingIdCard(true);
+                    }}
+                    onDragLeave={() => setIsDraggingIdCard(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingIdCard(false);
+                      if (e.dataTransfer.files?.[0]) {
+                        processIdCardFile(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    onClick={() => idCardInputRef.current?.click()}
+                    className={`p-5 rounded-xl border-2 border-dashed transition text-center cursor-pointer flex flex-col items-center justify-center space-y-1.5 ${
+                      isDraggingIdCard
+                        ? 'border-emerald-500 bg-emerald-50/50'
+                        : 'border-slate-300 hover:border-emerald-500 hover:bg-white bg-slate-50/60'
+                    }`}
+                  >
+                    <input
+                      ref={idCardInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && processIdCardFile(e.target.files[0])}
+                    />
+                    <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">
+                      คลิกเลือก หรือลากรูปบัตรประชาชนมาที่นี่
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      รองรับ JPG, PNG, PDF (ไม่เกิน 5MB)
+                    </p>
+                  </div>
+                )}
+
+                {idCardError && (
+                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    {idCardError}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* 2. Driver's License Card */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Car className="w-4 h-4 text-blue-600" />
+                    2. ภาพถ่ายใบขับขี่ (สำหรับผู้ที่ขับรถ)
+                  </span>
+                  {(driverLicenseFile || driverLicenseUrl) ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                      แนบแล้ว
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600">
+                      ตัวเลือก
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  ใช้รับรองกรณีให้บริการเดินทางด้วยรถยนต์ส่วนตัว
+                </p>
+
+                {driverLicensePreview ? (
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="relative w-14 h-14 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center">
+                        {driverLicensePreview === 'pdf' ? (
+                          <FileText className="w-7 h-7 text-rose-500" />
+                        ) : (
+                          <img
+                            src={driverLicensePreview}
+                            alt="ใบขับขี่"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-800 truncate">
+                          {driverLicenseFile ? driverLicenseFile.name : 'ใบขับขี่ในระบบ'}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {driverLicenseFile ? `${(driverLicenseFile.size / 1024).toFixed(1)} KB (ไฟล์ใหม่)` : 'บันทึกในระบบแล้ว'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      {driverLicensePreview !== 'pdf' && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewModalDoc({ title: 'ภาพถ่ายใบอนุญาตขับขี่', url: driverLicensePreview })}
+                          className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          ดูรูปขยาย
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleRemoveDriverLicense}
+                        className="py-1.5 px-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        เปลี่ยน
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingDriverLicense(true);
+                    }}
+                    onDragLeave={() => setIsDraggingDriverLicense(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingDriverLicense(false);
+                      if (e.dataTransfer.files?.[0]) {
+                        processDriverLicenseFile(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    onClick={() => driverLicenseInputRef.current?.click()}
+                    className={`p-5 rounded-xl border-2 border-dashed transition text-center cursor-pointer flex flex-col items-center justify-center space-y-1.5 ${
+                      isDraggingDriverLicense
+                        ? 'border-blue-500 bg-blue-50/50'
+                        : 'border-slate-300 hover:border-blue-500 hover:bg-white bg-slate-50/60'
+                    }`}
+                  >
+                    <input
+                      ref={driverLicenseInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && processDriverLicenseFile(e.target.files[0])}
+                    />
+                    <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                      <Car className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">
+                      คลิกเลือก หรือลากรูปใบขับขี่มาที่นี่
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      รองรับ JPG, PNG, PDF (ไม่เกิน 5MB)
+                    </p>
+                  </div>
+                )}
+
+                {driverLicenseError && (
+                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    {driverLicenseError}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Submit */}
@@ -386,6 +865,43 @@ export default function CompanionProfilePage() {
           </button>
         </div>
       </form>
+
+      {/* Full Document Preview Modal */}
+      {previewModalDoc && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 space-y-4 shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600" />
+                {previewModalDoc.title}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPreviewModalDoc(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[70vh] overflow-auto rounded-2xl border border-slate-100 bg-slate-900/5 flex items-center justify-center p-2">
+              <img
+                src={previewModalDoc.url}
+                alt={previewModalDoc.title}
+                className="max-h-[65vh] w-auto object-contain rounded-xl shadow-xs"
+              />
+            </div>
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setPreviewModalDoc(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -20,7 +20,12 @@ import {
   Users,
   HeartPulse,
   ShieldAlert,
-  Activity
+  Activity,
+  Navigation,
+  Crosshair,
+  ExternalLink,
+  Loader2,
+  Check
 } from 'lucide-react';
 
 function BookingForm() {
@@ -41,7 +46,13 @@ function BookingForm() {
   const [selectedCompanionId, setSelectedCompanionId] = useState(initialCompanionId);
   const [specialNotes, setSpecialNotes] = useState('');
   
-  // Passenger & Care Details
+  // Geolocation & Map State
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState(false);
+  const [showMapPreview, setShowMapPreview] = useState(false);
+
+  // Customer & Passenger Care Details
+  const [customerPhone, setCustomerPhone] = useState(currentUser?.phone ? formatPhoneNumber(currentUser.phone) : '');
   const [isForOther, setIsForOther] = useState(false);
   const [passengerName, setPassengerName] = useState(currentUser?.full_name || '');
   const [passengerAge, setPassengerAge] = useState<string>(currentUser?.age ? String(currentUser.age) : '65');
@@ -56,14 +67,19 @@ function BookingForm() {
 
   // Sync with current user profile if available
   useEffect(() => {
-    if (currentUser && !isForOther) {
-      if (!passengerName) setPassengerName(currentUser.full_name || '');
-      if (currentUser.age) setPassengerAge(String(currentUser.age));
-      if (currentUser.gender) setPassengerGender(currentUser.gender as any);
-      if (currentUser.emergency_contact_name) setEmergencyContactName(currentUser.emergency_contact_name);
-      if (currentUser.emergency_contact_phone) setEmergencyContactPhone(formatPhoneNumber(currentUser.emergency_contact_phone));
+    if (currentUser) {
+      if (currentUser.phone && !customerPhone) {
+        setCustomerPhone(formatPhoneNumber(currentUser.phone));
+      }
+      if (!isForOther) {
+        if (!passengerName) setPassengerName(currentUser.full_name || '');
+        if (currentUser.age) setPassengerAge(String(currentUser.age));
+        if (currentUser.gender) setPassengerGender(currentUser.gender as any);
+        if (currentUser.emergency_contact_name) setEmergencyContactName(currentUser.emergency_contact_name);
+        if (currentUser.emergency_contact_phone) setEmergencyContactPhone(formatPhoneNumber(currentUser.emergency_contact_phone));
+      }
     }
-  }, [currentUser, isForOther]);
+  }, [currentUser, isForOther, customerPhone]);
 
   // Default to tomorrow
   useEffect(() => {
@@ -80,6 +96,77 @@ function BookingForm() {
 
   const isSelfSelected = Boolean(currentUser && selectedCompanionId && selectedCompanionId === currentUser.id);
 
+  // Geolocation Handler: Get user's current GPS location & reverse geocode
+  const handleGetCurrentLocation = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      setError('อุปกรณ์หรือเบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง GPS');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationSuccess(false);
+    setError('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'th,en',
+              },
+            }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address || {};
+            const parts = [
+              addr.building || addr.amenity || addr.shop || addr.office,
+              addr.road || addr.pedestrian || addr.suburb,
+              addr.neighbourhood || addr.subdistrict || addr.quarter,
+              addr.city_district || addr.district,
+              addr.province || addr.city || addr.state,
+            ].filter(Boolean);
+
+            if (parts.length > 0) {
+              setOrigin(`${parts.join(', ')} (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+            } else if (data.display_name) {
+              setOrigin(`${data.display_name.split(',').slice(0, 4).join(',')} (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+            } else {
+              setOrigin(`ตำแหน่ง GPS ปัจจุบัน (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+            }
+          } else {
+            setOrigin(`ตำแหน่ง GPS ปัจจุบัน (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+          }
+        } catch (fetchErr) {
+          console.warn('Reverse geocoding error', fetchErr);
+          setOrigin(`ตำแหน่ง GPS ปัจจุบัน (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+        } finally {
+          setIsLocating(false);
+          setLocationSuccess(true);
+          setShowMapPreview(true);
+        }
+      },
+      (geoErr) => {
+        setIsLocating(false);
+        if (geoErr.code === geoErr.PERMISSION_DENIED) {
+          setError('กรุณาอนุญาตการเข้าถึงตำแหน่งที่ตั้ง (Location Permission) ในเบราว์เซอร์เพื่อดึงพิกัด GPS');
+        } else if (geoErr.code === geoErr.POSITION_UNAVAILABLE) {
+          setError('ไม่สามารถระบุพิกัด GPS ได้ในขณะนี้ กรุณาพิมพ์ที่อยู่ด้วยตนเอง');
+        } else if (geoErr.code === geoErr.TIMEOUT) {
+          setError('หมดเวลาการค้นหาพิกัด GPS กรุณาลองใหม่อีกครั้ง หรือพิมพ์ที่อยู่ด้วยตนเอง');
+        } else {
+          setError('ไม่สามารถดึงตำแหน่งที่ตั้งได้ กรุณาพิมพ์ที่อยู่ด้วยตนเอง');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -91,6 +178,11 @@ function BookingForm() {
 
     if (!title.trim() || !origin.trim() || !destination.trim() || !scheduledDate || !scheduledTime) {
       setError('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (หัวข้อธุระ, จุดรับต้นทาง, ปลายทาง, วันที่ และเวลา)');
+      return;
+    }
+
+    if (!customerPhone.trim()) {
+      setError('กรุณาระบุเบอร์โทรศัพท์ของคุณ เพื่อให้ผู้ช่วยร่วมเดินทางสามารถติดต่อประสานงานได้');
       return;
     }
 
@@ -121,6 +213,7 @@ function BookingForm() {
         duration_hours: durationHours,
         estimated_cost: estimatedCost,
         special_notes: specialNotes,
+        customer_phone: customerPhone.trim(),
         is_for_other: isForOther,
         passenger_name: isForOther ? passengerName.trim() : (currentUser?.full_name || passengerName.trim() || 'ผู้เดินทาง'),
         passenger_age: passengerAge ? parseInt(String(passengerAge), 10) : undefined,
@@ -226,6 +319,32 @@ function BookingForm() {
             <span className="text-[11px] text-slate-500 font-medium">
               * ข้อมูลนี้ใช้เพื่อความปลอดภัยในการดูแลเท่านั้น
             </span>
+          </div>
+
+          {/* Customer's Own Phone Number */}
+          <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80 space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Phone className="w-4 h-4 text-blue-600" />
+                <span>เบอร์โทรศัพท์ของคุณ (ผู้ว่าจ้าง / ผู้ติดต่อหลัก)</span>
+                <span className="text-rose-500">*</span>
+              </label>
+              <span className="text-[11px] text-blue-700 font-medium">
+                จำเป็นสำหรับให้ผู้ช่วยร่วมเดินทางโทรติดต่อ
+              </span>
+            </div>
+            <input
+              type="tel"
+              placeholder="081-234-5678"
+              maxLength={12}
+              required
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(formatPhoneNumber(e.target.value, customerPhone))}
+              className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-blue-200 text-base sm:text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono shadow-2xs"
+            />
+            <p className="text-[11px] text-slate-500">
+              * เบอร์โทรนี้จะส่งให้ผู้ช่วยร่วมเดินทาง (Companion) ทราบ เพื่อใช้โทรติดต่อยืนยันเวลานัดหมายและจุดรับ-ส่ง
+            </p>
           </div>
 
           {/* Toggle: Self vs Other */}
@@ -408,22 +527,103 @@ function BookingForm() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">
-                สถานที่ต้นทาง (จุดนัดพบ/บ้าน) <span className="text-rose-500">*</span>
-              </label>
+            {/* Origin Location with GPS Support */}
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                  <span>สถานที่ต้นทาง (จุดนัดพบ / ที่พักของคุณ)</span>
+                  <span className="text-rose-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGetCurrentLocation}
+                  disabled={isLocating}
+                  className="min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 active:scale-95 transition flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-50"
+                  title="ใช้ GPS ตรวจจับตำแหน่งปัจจุบันอัตโนมัติ"
+                >
+                  {isLocating ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                      <span>กำลังตรวจจับพิกัด GPS...</span>
+                    </>
+                  ) : locationSuccess ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>อัปเดตตำแหน่ง GPS แล้ว</span>
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="w-3.5 h-3.5 text-blue-600" />
+                      <span>📍 ใช้ตำแหน่งปัจจุบัน (GPS)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               <input
                 type="text"
-                placeholder="เช่น คอนโดเดอะเบส พหลโยธิน, ซอยสุขุมวิท 39"
+                placeholder="เช่น คอนโดเดอะเบส พหลโยธิน หรือกดปุ่ม GPS ด้านบน"
                 value={origin}
-                onChange={(e) => setOrigin(e.target.value)}
+                onChange={(e) => {
+                  setOrigin(e.target.value);
+                  setLocationSuccess(false);
+                }}
                 required
                 className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-sm text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
+              {/* Location Tools & Links */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 pt-0.5">
+                <span className="text-slate-500">
+                  * สามารถพิมพ์แก้ไขที่อยู่เองได้ หรือกดปุ่ม GPS ช่วยดึงพิกัด
+                </span>
+
+                {origin.trim() && (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(origin)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>เปิดดูบน Google Maps</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowMapPreview(!showMapPreview)}
+                      className="inline-flex items-center gap-1 font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+                    >
+                      <span>{showMapPreview ? 'ซ่อนแผนที่ย่อ' : '🗺️ ดูแผนที่ย่อ'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Embedded Google Map Preview */}
+              {showMapPreview && origin.trim() && (
+                <div className="mt-2 rounded-2xl overflow-hidden border border-slate-200 shadow-xs h-48 sm:h-56 bg-slate-100 relative">
+                  <iframe
+                    title="Origin Map Preview"
+                    width="100%"
+                    height="100%"
+                    loading="lazy"
+                    className="border-0"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(origin)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  />
+                  <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-700 shadow-2xs border border-slate-200 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-rose-500" />
+                    <span>หมุดจุดรับต้นทาง</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">
+            {/* Destination Location */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 block">
                 สถานที่ปลายทาง (จุดทำธุระ) <span className="text-rose-500">*</span>
               </label>
               <input
@@ -434,6 +634,20 @@ function BookingForm() {
                 required
                 className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl border border-slate-200 text-base sm:text-sm text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
+              {destination.trim() && (
+                <div className="text-right pt-0.5">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    <span>เปิดดูปลายทางบน Google Maps</span>
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

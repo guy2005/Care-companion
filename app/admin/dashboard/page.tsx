@@ -17,16 +17,23 @@ import {
   XCircle, 
   Star, 
   TrendingUp,
-  Search,
-  Filter,
-  SlidersHorizontal,
-  MapPin,
-  Clock,
-  AlertCircle,
-  LogIn,
-  Phone
+  Search, 
+  Filter, 
+  SlidersHorizontal, 
+  MapPin, 
+  Clock, 
+  AlertCircle, 
+  LogIn, 
+  Phone,
+  Eye,
+  FileText,
+  ExternalLink,
+  X,
+  CreditCard,
+  Car
 } from 'lucide-react';
-import { BookingStatus } from '@/lib/types';
+import { BookingStatus, CompanionProfile } from '@/lib/types';
+import { createClient } from '@/lib/supabase/client';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -45,6 +52,64 @@ export default function AdminDashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+
+  // Document Inspection Modal State (2 documents: ID Card & Driver License)
+  const [inspectingCompanion, setInspectingCompanion] = useState<CompanionProfile | null>(null);
+  const [inspectingIdCardUrl, setInspectingIdCardUrl] = useState<string | null>(null);
+  const [inspectingDriverLicenseUrl, setInspectingDriverLicenseUrl] = useState<string | null>(null);
+  const [loadingDocUrl, setLoadingDocUrl] = useState<boolean>(false);
+
+  const handleInspectDocument = async (comp: CompanionProfile) => {
+    setInspectingCompanion(comp);
+    setInspectingIdCardUrl(null);
+    setInspectingDriverLicenseUrl(null);
+
+    const idCardSource = comp.id_card_url || comp.verification_doc_url;
+    const driverLicenseSource = comp.driver_license_url;
+
+    if (!idCardSource && !driverLicenseSource) return;
+
+    setLoadingDocUrl(true);
+    try {
+      const supabase = createClient();
+
+      // 1. Resolve ID Card URL
+      if (idCardSource) {
+        if (
+          idCardSource.startsWith('http') ||
+          idCardSource.startsWith('blob:') ||
+          idCardSource.startsWith('data:')
+        ) {
+          setInspectingIdCardUrl(idCardSource);
+        } else if (supabase) {
+          const { data } = await supabase.storage
+            .from('verification-docs')
+            .createSignedUrl(idCardSource, 60 * 15);
+          if (data?.signedUrl) setInspectingIdCardUrl(data.signedUrl);
+        }
+      }
+
+      // 2. Resolve Driver's License URL
+      if (driverLicenseSource) {
+        if (
+          driverLicenseSource.startsWith('http') ||
+          driverLicenseSource.startsWith('blob:') ||
+          driverLicenseSource.startsWith('data:')
+        ) {
+          setInspectingDriverLicenseUrl(driverLicenseSource);
+        } else if (supabase) {
+          const { data } = await supabase.storage
+            .from('verification-docs')
+            .createSignedUrl(driverLicenseSource, 60 * 15);
+          if (data?.signedUrl) setInspectingDriverLicenseUrl(data.signedUrl);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to get signed URLs', e);
+    } finally {
+      setLoadingDocUrl(false);
+    }
+  };
 
   useEffect(() => {
     if (!currentUser) {
@@ -262,10 +327,32 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                    <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                      {(() => {
+                        const hasId = Boolean(companion.id_card_url || companion.verification_doc_url);
+                        const hasDriver = Boolean(companion.driver_license_url);
+                        const docCount = (hasId ? 1 : 0) + (hasDriver ? 1 : 0);
+
+                        return docCount > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => handleInspectDocument(companion)}
+                            className="px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition flex items-center gap-1.5 active:scale-[0.98] cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4 text-blue-600" />
+                            <span>ดูเอกสาร ({docCount} ฉบับ)</span>
+                          </button>
+                        ) : (
+                          <span className="px-3 py-2 rounded-xl text-[11px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-slate-400" />
+                            <span>ยังไม่แนบเอกสาร</span>
+                          </span>
+                        );
+                      })()}
+
                       <button
                         onClick={() => toggleCompanionVerification(companion.id)}
-                        className={`w-full md:w-auto min-h-[44px] justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-[0.98] ${
+                        className={`w-full sm:w-auto min-h-[44px] justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-[0.98] cursor-pointer ${
                           companion.is_verified
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                             : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
@@ -463,6 +550,179 @@ export default function AdminDashboardPage() {
         }}
         onCancel={() => setCancelBookingId(null)}
       />
+
+      {/* Document Inspection Modal for Admin */}
+      {inspectingCompanion && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-6 space-y-5 shadow-2xl overflow-hidden my-8">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-blue-600" />
+                  ตรวจสอบเอกสารยืนยันตัวตน (2 เอกสาร)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {allProfiles.find((p) => p.id === inspectingCompanion.id)?.full_name || 'ผู้ร่วมเดินทาง'} (รหัส: #{inspectingCompanion.id.slice(-6).toUpperCase()})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectingCompanion(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {loadingDocUrl ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-12 text-center space-y-2 text-slate-500">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs font-semibold">กำลังดึงลิงก์เอกสารที่ปลอดภัย (Signed URL)...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. ID Card Card */}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <CreditCard className="w-4 h-4 text-blue-600" />
+                        <span>1. ภาพถ่ายบัตรประชาชน</span>
+                      </div>
+                      {inspectingIdCardUrl ? (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          แนบแล้ว
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
+                          ยังไม่แนบ
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[220px] max-h-[300px] flex items-center justify-center overflow-hidden p-2">
+                      {inspectingIdCardUrl ? (
+                        <img
+                          src={inspectingIdCardUrl}
+                          alt="บัตรประจำตัวประชาชน"
+                          className="max-h-[280px] w-auto object-contain rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-slate-400 space-y-1">
+                          <CreditCard className="w-10 h-10 mx-auto stroke-1" />
+                          <p className="text-xs font-semibold text-slate-500">ยังไม่ได้อัปโหลดบัตรประชาชน</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {inspectingIdCardUrl && (
+                    <a
+                      href={inspectingIdCardUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 py-1 hover:underline cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      เปิดดูบัตรประชาชนขนาดเต็ม
+                    </a>
+                  )}
+                </div>
+
+                {/* 2. Driver License Card */}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <Car className="w-4 h-4 text-emerald-600" />
+                        <span>2. ภาพถ่ายใบขับขี่</span>
+                      </div>
+                      {inspectingDriverLicenseUrl ? (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          แนบแล้ว
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
+                          ยังไม่แนบ
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[220px] max-h-[300px] flex items-center justify-center overflow-hidden p-2">
+                      {inspectingDriverLicenseUrl ? (
+                        <img
+                          src={inspectingDriverLicenseUrl}
+                          alt="ใบอนุญาตขับรถ"
+                          className="max-h-[280px] w-auto object-contain rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-slate-400 space-y-1">
+                          <Car className="w-10 h-10 mx-auto stroke-1" />
+                          <p className="text-xs font-semibold text-slate-500">ยังไม่ได้อัปโหลดใบขับขี่</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {inspectingDriverLicenseUrl && (
+                    <a
+                      href={inspectingDriverLicenseUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-600 hover:text-emerald-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 py-1 hover:underline cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      เปิดดูใบขับขี่ขนาดเต็ม
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="p-2.5 rounded-xl bg-slate-100 border border-slate-200/60 text-[11px] text-slate-500 flex items-center justify-between">
+              <span>🔒 ความปลอดภัย: ลิงก์รูปภาพชั่วคราวจะหมดอายุภายใน 15 นาทีตามมาตรฐาน PDPA</span>
+            </div>
+
+            {/* Modal actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setInspectingCompanion(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                ปิดหน้าต่าง
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleCompanionVerification(inspectingCompanion.id);
+                    setInspectingCompanion(null);
+                  }}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
+                    inspectingCompanion.is_verified
+                      ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'
+                  }`}
+                >
+                  {inspectingCompanion.is_verified ? (
+                    <>
+                      <XCircle className="w-4 h-4" />
+                      <span>เพิกถอนการอนุมัติ</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>อนุมัติและรับรองประวัติ</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

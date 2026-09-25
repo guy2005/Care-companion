@@ -49,3 +49,10 @@ export function formatPhoneNumber(input: string, prevValue: string = ''): string
 export function isValidPhoneNumber(phone: string): boolean {
   return /^0\d{2}-\d{3}-\d{4}$/.test(phone);
 }
+
+/**
+ * Validates if the string is a valid UUID v4
+ */
+export function isUuid(id?: string | null): boolean {
+  return Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+}

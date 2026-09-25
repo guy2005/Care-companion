@@ -209,37 +209,64 @@ export default function CompanionDetailPage({ params }: PageProps) {
 
             {companionReviews.length > 0 ? (
               <div className="space-y-4">
-                {companionReviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="p-4 rounded-2xl bg-slate-50/70 border border-slate-100 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
-                          {review.customer?.full_name?.charAt(0) || 'ล'}
+                {companionReviews.map((review) => {
+                  const reviewer =
+                    allProfiles.find((p) => p.id === review.customer_id) ||
+                    review.customer ||
+                    (currentUser && currentUser.id === review.customer_id ? currentUser : undefined) ||
+                    INITIAL_PROFILES[review.customer_id];
+                  const reviewerName =
+                    reviewer?.full_name?.trim() ||
+                    review.customer?.full_name?.trim() ||
+                    'ผู้ใช้งาน Care Companion';
+                  const avatarChar = (reviewerName ? reviewerName.charAt(0) : 'U').toUpperCase();
+
+                  return (
+                    <div
+                      key={review.id}
+                      className="p-4 rounded-2xl bg-slate-50/70 border border-slate-100 space-y-2 hover:bg-slate-50 transition"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {reviewer?.avatar_url ? (
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                              <Image
+                                src={reviewer.avatar_url}
+                                alt={reviewerName}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 border border-blue-200/60 shadow-2xs">
+                              {avatarChar}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-slate-800 block truncate">
+                              {reviewerName}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block">
+                              {new Date(review.created_at).toLocaleDateString('th-TH')}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-xs font-bold text-slate-800">
-                          {review.customer?.full_name || 'ลูกค้า Care Companion'}
-                        </span>
+                        <div className="flex items-center gap-1 text-amber-500 shrink-0">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3.5 h-3.5 ${
+                                i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-amber-500">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-3.5 h-3.5 ${
-                              i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'
-                            }`}
-                          />
-                        ))}
-                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed pt-0.5">{review.comment}</p>
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">{review.comment}</p>
-                    <span className="text-[10px] text-slate-400">
-                      {new Date(review.created_at).toLocaleDateString('th-TH')}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-6 text-xs text-slate-500">
