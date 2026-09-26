@@ -33,7 +33,7 @@ function BookingForm() {
   const searchParams = useSearchParams();
   const initialCompanionId = searchParams.get('companion_id') || '';
 
-  const { currentUser, role, companions, categories, allProfiles, createBooking, loginAsDemo } = useApp();
+  const { currentUser, role, switchRole, companions, categories, allProfiles, createBooking, loginAsDemo } = useApp();
 
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '');
   const [title, setTitle] = useState('');
@@ -95,6 +95,7 @@ function BookingForm() {
   const estimatedCost = Math.round(durationHours * ratePerHour);
 
   const isSelfSelected = Boolean(currentUser && selectedCompanionId && selectedCompanionId === currentUser.id);
+  const isCompanionOrAdmin = Boolean(currentUser && (role === 'companion' || role === 'admin'));
 
   // Geolocation Handler: Get user's current GPS location & reverse geocode
   const handleGetCurrentLocation = () => {
@@ -171,6 +172,13 @@ function BookingForm() {
     e.preventDefault();
     setError('');
 
+    if (isCompanionOrAdmin) {
+      setError(
+        `บัญชีของคุณอยู่ในบทบาท ${role === 'companion' ? 'ผู้ร่วมเดินทาง (Companion)' : 'ผู้ดูแลระบบ (Admin)'} ซึ่งเปิดให้ดูและตรวจสอบตัวอย่างหน้าฟอร์มเท่านั้น ไม่สามารถกดยืนยันและส่งคำขอร่วมเดินทางได้ หากต้องการส่งคำขอจริง กรุณาสลับเป็นบทบาทลูกค้า (Customer)`
+      );
+      return;
+    }
+
     if (isSelfSelected) {
       setError('คุณไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้ กรุณาเลือกผู้ช่วยท่านอื่น หรือเปิดรับคำขอทั่วไป');
       return;
@@ -246,6 +254,37 @@ function BookingForm() {
           กรอกรายละเอียดสถานที่ วันเวลา และธุระของคุณ เพื่อให้ผู้ช่วยร่วมเดินทางเตรียมพร้อมอำนวยความสะดวกได้อย่างตรงใจ
         </p>
       </div>
+ 
+      {/* Role Notice Banner for Companion or Admin */}
+      {isCompanionOrAdmin && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-amber-900 shadow-xs">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-700 mt-0.5">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-900 text-sm">
+                  โหมดตรวจสอบแบบฟอร์ม ({role === 'companion' ? 'Companion View' : 'Admin View'})
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">
+                  ปิดปุ่มส่งคำขอ
+                </span>
+              </div>
+              <p className="text-amber-800 text-xs mt-1 leading-relaxed">
+                คุณกำลังเข้าสู่ระบบในบทบาท <strong>{role === 'companion' ? 'ผู้ร่วมเดินทาง (Companion)' : 'ผู้ดูแลระบบ (Admin)'}</strong> ระบบเปิดให้คุณดูและทดสอบกรอกข้อมูลเพื่อตรวจสอบหน้าตาของแบบฟอร์มเท่านั้น <strong>โดยไม่อนุญาตให้กดยืนยันและส่งคำขอร่วมเดินทาง</strong> หากต้องการสร้างคำขอจริง สามารถกดสลับเป็นบทบาทลูกค้าได้ทันที
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => switchRole('customer')}
+            className="px-4 py-2.5 min-h-[42px] rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-98 text-white font-bold shrink-0 transition shadow-xs cursor-pointer text-xs whitespace-nowrap"
+          >
+            สลับเป็นบทบาทลูกค้า (Customer)
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
@@ -782,40 +821,72 @@ function BookingForm() {
         </div>
 
         {/* Cost Summary Box */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="text-center sm:text-left">
-            <span className="text-xs font-semibold text-blue-700">ประมาณการค่าบริการ</span>
-            <div className="text-2xl sm:text-3xl font-black text-blue-900">
-              ฿{estimatedCost.toLocaleString()}
+        <div className="space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="text-center sm:text-left">
+              <span className="text-xs font-semibold text-blue-700">ประมาณการค่าบริการ</span>
+              <div className="text-2xl sm:text-3xl font-black text-blue-900">
+                ฿{estimatedCost.toLocaleString()}
+              </div>
+              <p className="text-[11px] text-blue-600 mt-0.5">
+                คำนวณจาก {durationHours} ชั่วโมง × ฿{ratePerHour}/ชม.
+              </p>
             </div>
-            <p className="text-[11px] text-blue-600 mt-0.5">
-              คำนวณจาก {durationHours} ชั่วโมง × ฿{ratePerHour}/ชม.
-            </p>
+
+            <button
+              type={isCompanionOrAdmin ? 'button' : 'submit'}
+              disabled={isSubmitting || isSelfSelected || isCompanionOrAdmin}
+              className={`w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl font-bold transition shadow-lg text-sm sm:text-base ${
+                isCompanionOrAdmin
+                  ? 'bg-slate-300 text-slate-600 border border-slate-300 cursor-not-allowed shadow-none'
+                  : isSelfSelected
+                  ? 'bg-slate-400 text-white cursor-not-allowed shadow-none'
+                  : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-blue-600/25 cursor-pointer disabled:opacity-50'
+              }`}
+              title={
+                isCompanionOrAdmin
+                  ? 'บทบาท Companion และ Admin ไม่สามารถกดยืนยันส่งคำขอได้ (เปิดให้ดูตัวอย่างแบบฟอร์มเท่านั้น)'
+                  : undefined
+              }
+            >
+              {isCompanionOrAdmin ? (
+                <>
+                  <Ban className="w-4 h-4 text-slate-500" />
+                  <span>ไม่สามารถส่งคำขอได้ (โหมดดูตัวอย่างสำหรับ {role === 'companion' ? 'Companion' : 'Admin'})</span>
+                </>
+              ) : isSelfSelected ? (
+                <>
+                  <Ban className="w-4 h-4" />
+                  <span>ไม่สามารถจ้างตัวเองได้ (กรุณาเปลี่ยนผู้ช่วย)</span>
+                </>
+              ) : isSubmitting ? (
+                <span>กำลังส่งคำขอ...</span>
+              ) : (
+                <>
+                  <span>ยืนยันและส่งคำขอร่วมเดินทาง</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
           </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting || isSelfSelected}
-            className={`w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl font-bold text-white transition shadow-lg text-sm sm:text-base ${
-              isSelfSelected
-                ? 'bg-slate-400 cursor-not-allowed shadow-none'
-                : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-blue-600/25 cursor-pointer disabled:opacity-50'
-            }`}
-          >
-            {isSelfSelected ? (
-              <>
-                <Ban className="w-4 h-4" />
-                <span>ไม่สามารถจ้างตัวเองได้ (กรุณาเปลี่ยนผู้ช่วย)</span>
-              </>
-            ) : isSubmitting ? (
-              <span>กำลังส่งคำขอ...</span>
-            ) : (
-              <>
-                <span>ยืนยันและส่งคำขอร่วมเดินทาง</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+          {isCompanionOrAdmin && (
+            <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start sm:items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                <span>
+                  ขณะนี้คุณอยู่ในบทบาท <strong>{role === 'companion' ? 'ผู้ร่วมเดินทาง (Companion)' : 'ผู้ดูแลระบบ (Admin)'}</strong> เพื่อตรวจสอบแบบฟอร์ม จึงปิดการกดยืนยันส่งคำขอ
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => switchRole('customer')}
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline shrink-0 text-left sm:text-right cursor-pointer"
+              >
+                สลับเป็นบทบาทลูกค้าเพื่อสร้างคำขอจริง →
+              </button>
+            </div>
+          )}
         </div>
       </form>
     </div>

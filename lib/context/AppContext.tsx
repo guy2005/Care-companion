@@ -104,6 +104,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             rating_count: Number(c.rating_count) || 0,
             id_card_url: c.id_card_url || c.verification_doc_url || undefined,
             driver_license_url: c.driver_license_url || undefined,
+            experience_doc_1_url: c.experience_doc_1_url || undefined,
+            experience_doc_2_url: c.experience_doc_2_url || undefined,
             verification_doc_url: c.id_card_url || c.verification_doc_url || undefined,
           };
         });
@@ -698,6 +700,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         verification_doc_url: data.id_card_url ?? data.verification_doc_url ?? existingComp?.verification_doc_url ?? null,
         id_card_url: data.id_card_url ?? existingComp?.id_card_url ?? null,
         driver_license_url: data.driver_license_url ?? existingComp?.driver_license_url ?? null,
+        experience_doc_1_url: data.experience_doc_1_url ?? existingComp?.experience_doc_1_url ?? null,
+        experience_doc_2_url: data.experience_doc_2_url ?? existingComp?.experience_doc_2_url ?? null,
         updated_at: new Date().toISOString(),
       };
 
@@ -707,6 +711,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.warn('Upsert with separate doc columns failed, falling back:', error.message);
         delete upsertPayload.id_card_url;
         delete upsertPayload.driver_license_url;
+        delete upsertPayload.experience_doc_1_url;
+        delete upsertPayload.experience_doc_2_url;
         const { error: fallbackErr } = await supabase.from('companion_profiles').upsert(upsertPayload);
         if (fallbackErr) {
           console.error('Supabase updateCompanionProfile fallback error:', fallbackErr.message);

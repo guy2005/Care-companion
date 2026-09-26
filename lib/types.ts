@@ -30,6 +30,8 @@ export interface CompanionProfile {
   verification_doc_url?: string;
   id_card_url?: string;
   driver_license_url?: string;
+  experience_doc_1_url?: string;
+  experience_doc_2_url?: string;
   is_available: boolean;
   rating_avg: number;
   rating_count: number;

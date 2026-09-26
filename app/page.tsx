@@ -25,7 +25,8 @@ import {
 
 export default function HomePage() {
   const router = useRouter();
-  const { companions, categories } = useApp();
+  const { currentUser, role, companions, categories } = useApp();
+  const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
 
@@ -131,7 +132,8 @@ export default function HomePage() {
                 href="/bookings/new"
                 className="font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
               >
-                หรือสร้างคำขอนัดหมายแบบกำหนดเอง <ArrowRight className="w-3.5 h-3.5" />
+                <span>{isCompanionOrAdmin ? 'หรือตรวจสอบตัวอย่างแบบฟอร์มนัดหมาย' : 'หรือสร้างคำขอนัดหมายแบบกำหนดเอง'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
@@ -318,14 +320,19 @@ export default function HomePage() {
                 สร้างคำขอนัดหมายล่วงหน้า ระบุเวลาและสถานที่เพื่อรับการดูแลอย่างดีที่สุด
               </p>
             </div>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 href="/bookings/new"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-blue-900 bg-white hover:bg-blue-50 transition shadow-sm"
               >
                 <Calendar className="w-4 h-4" />
-                <span>จองบริการทันที</span>
+                <span>{isCompanionOrAdmin ? 'จองบริการทันที (ดูตัวอย่างแบบฟอร์ม)' : 'จองบริการทันที'}</span>
               </Link>
+              {isCompanionOrAdmin && (
+                <span className="text-xs text-blue-100 bg-white/15 px-3 py-1.5 rounded-lg border border-white/20 backdrop-blur-xs font-medium">
+                  (โหมดตรวจสอบแบบฟอร์มสำหรับ {role === 'companion' ? 'Companion' : 'Admin'})
+                </span>
+              )}
             </div>
           </div>
 

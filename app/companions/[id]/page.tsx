@@ -20,7 +20,8 @@ import {
   MessageSquare,
   Phone,
   Ban,
-  AlertCircle
+  AlertCircle,
+  UserCheck
 } from 'lucide-react';
 
 interface PageProps {
@@ -30,12 +31,13 @@ interface PageProps {
 export default function CompanionDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const { currentUser, companions, reviews, allProfiles } = useApp();
+  const { currentUser, role, companions, reviews, allProfiles } = useApp();
 
   const companion = companions.find((c) => c.id === resolvedParams.id);
   const profile = allProfiles.find((p) => p.id === resolvedParams.id) || companion?.profile || INITIAL_PROFILES[resolvedParams.id];
   const companionReviews = reviews.filter((r) => r.companion_id === resolvedParams.id);
   const isSelf = Boolean(currentUser && currentUser.id === resolvedParams.id);
+  const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
 
   if (!companion || !profile) {
     return (
@@ -317,28 +319,65 @@ export default function CompanionDetailPage({ params }: PageProps) {
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-amber-900">
                     <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>ไม่สามารถจ้างตัวเองได้</span>
+                    <span>โปรไฟล์ของคุณ</span>
                   </div>
                   <p className="text-[11px] text-amber-700 leading-relaxed">
-                    นี่คือโปรไฟล์ผู้ร่วมเดินทางของคุณเอง ระบบไม่อนุญาตให้ผู้ว่าจ้างเลือกหรือสร้างคำขอนัดหมายเพื่อจ้างตัวเอง
+                    นี่คือโปรไฟล์ผู้ร่วมเดินทางของคุณเอง คุณสามารถจัดการข้อมูลและเอกสารได้ที่หน้าแก้ไขโปรไฟล์
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  disabled
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed text-xs"
-                >
-                  <Ban className="w-4 h-4 text-slate-400" />
-                  <span>ไม่สามารถจ้างตัวเองได้ (บัญชีของคุณ)</span>
-                </button>
-
                 <Link
                   href="/companion/profile"
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition text-xs"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition text-xs shadow-xs"
                 >
                   <span>แก้ไขข้อมูลโปรไฟล์ผู้ช่วยนี้</span>
                 </Link>
+              </div>
+            ) : isCompanionOrAdmin ? (
+              <div className="pt-2 space-y-2.5">
+                {role === 'companion' && (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-slate-800">
+                      <UserCheck className="w-4 h-4 text-emerald-600" />
+                      <span>มุมมองผู้ร่วมเดินทาง (Companion View)</span>
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      คุณกำลังดูข้อมูลและประวัติการทำงานของเพื่อนร่วมทางท่านนี้
+                    </p>
+                  </div>
+                )}
+
+                {role === 'admin' && (
+                  <div className="p-3.5 rounded-2xl bg-purple-50 border border-purple-200 text-xs text-purple-900 space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-purple-800">
+                      <ShieldCheck className="w-4 h-4 text-purple-600" />
+                      <span>มุมมองผู้ดูแลระบบ (Admin View)</span>
+                    </p>
+                    <p className="text-[11px] text-purple-700">
+                      คุณกำลังตรวจสอบประวัติผู้ร่วมเดินทาง สามารถตรวจเอกสารได้ที่แดชบอร์ด
+                    </p>
+                  </div>
+                )}
+
+                {role === 'admin' && (
+                  <Link
+                    href="/admin/dashboard"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-purple-800 bg-purple-100 hover:bg-purple-200 border border-purple-300 transition text-xs shadow-2xs"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-purple-700" />
+                    <span>ไปที่แดชบอร์ดแอดมินเพื่อตรวจสอบเอกสาร</span>
+                  </Link>
+                )}
+
+                {profile.phone && (
+                  <a
+                    href={`tel:${profile.phone}`}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition text-xs shadow-2xs"
+                  >
+                    <Phone className="w-4 h-4 text-emerald-600" />
+                    <span>โทรติดต่อผู้ช่วย: {profile.phone}</span>
+                  </a>
+                )}
               </div>
             ) : (
               <div className="pt-2 space-y-2.5">

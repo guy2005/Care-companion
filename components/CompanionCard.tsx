@@ -11,8 +11,9 @@ interface CompanionCardProps {
 }
 
 export default function CompanionCard({ companion }: CompanionCardProps) {
-  const { currentUser, allProfiles } = useApp();
+  const { currentUser, role, allProfiles } = useApp();
   const isSelf = Boolean(currentUser && currentUser.id === companion.id);
+  const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
   const profile = companion.profile || allProfiles.find((p) => p.id === companion.id) || INITIAL_PROFILES[companion.id];
   const name = profile?.full_name || 'ผู้ร่วมเดินทาง';
   const avatar = profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
@@ -128,7 +129,15 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
 
       {/* Action Footer */}
       <div className="p-3.5 sm:p-4 bg-white">
-        {isSelf ? (
+        {isCompanionOrAdmin ? (
+          <Link
+            href={`/companions/${companion.id}`}
+            className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition border border-slate-200/80 group-hover:border-slate-300"
+          >
+            <span>{isSelf ? 'ดูประวัติของคุณ' : 'ดูประวัติ'}</span>
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-slate-500" />
+          </Link>
+        ) : isSelf ? (
           <div className="flex gap-2">
             <Link
               href={`/companions/${companion.id}`}

@@ -53,6 +53,23 @@ export default function CompanionDashboardPage() {
   const [activeTab, setActiveTab] = useState<'requests' | 'active_jobs' | 'history'>('requests');
   const [selectedBookingDetails, setSelectedBookingDetails] = useState<Booking | null>(null);
 
+  // Modal Dialog Config
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'success' | 'primary';
+    isAlertOnly?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   useEffect(() => {
     if (!currentUser) {
       router.replace('/login');
@@ -113,22 +130,6 @@ export default function CompanionDashboardPage() {
   // Calculate earnings
   const totalEarnings = completedJobs.reduce((sum, b) => sum + b.estimated_cost, 0);
 
-  // Modal Dialog Config
-  const [modalConfig, setModalConfig] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    confirmText?: string;
-    cancelText?: string;
-    variant?: 'danger' | 'warning' | 'success' | 'primary';
-    isAlertOnly?: boolean;
-    onConfirm: () => void;
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-  });
 
   const handleAccept = (bookingId: string) => {
     const targetBooking = bookings.find((b) => b.id === bookingId);

@@ -224,17 +224,19 @@ export default function Navbar() {
               <Search className="w-4 h-4" />
               ค้นหาผู้ร่วมเดินทาง
             </Link>
-            <Link
-              href="/bookings/new"
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
-                isBookingNewActive
-                  ? 'text-blue-600 bg-blue-50/90 font-semibold shadow-2xs'
-                  : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <Calendar className="w-4 h-4" />
-              ขอรับบริการเดินทาง
-            </Link>
+            {(!currentUser || role === 'customer') && (
+              <Link
+                href="/bookings/new"
+                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                  isBookingNewActive
+                    ? 'text-blue-600 bg-blue-50/90 font-semibold shadow-2xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                ขอรับบริการเดินทาง
+              </Link>
+            )}
 
             {/* Role-Specific Dashboard Links */}
             {role === 'customer' && (
@@ -448,7 +450,9 @@ export default function Navbar() {
             </div>
             {renderMobileNavLink('/', 'หน้าแรก', <Home className="w-4 h-4" />, isHomeActive, 'blue')}
             {renderMobileNavLink('/companions', 'ค้นหาผู้ร่วมเดินทาง', <Search className="w-4 h-4" />, isCompanionsActive, 'blue')}
-            {renderMobileNavLink('/bookings/new', 'ขอรับบริการเดินทาง', <Calendar className="w-4 h-4" />, isBookingNewActive, 'blue')}
+            {(!currentUser || role === 'customer') && (
+              renderMobileNavLink('/bookings/new', 'ขอรับบริการเดินทาง', <Calendar className="w-4 h-4" />, isBookingNewActive, 'blue')
+            )}
           </div>
 
           {/* Role-Specific Portal Section */}

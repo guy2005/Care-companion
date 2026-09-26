@@ -30,7 +30,9 @@ import {
   ExternalLink,
   X,
   CreditCard,
-  Car
+  Car,
+  Award,
+  FileCheck
 } from 'lucide-react';
 import { BookingStatus, CompanionProfile } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -53,21 +55,27 @@ export default function AdminDashboardPage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
 
-  // Document Inspection Modal State (2 documents: ID Card & Driver License)
+  // Document Inspection Modal State (4 documents: ID Card, Driver License, Experience Docs 1 & 2)
   const [inspectingCompanion, setInspectingCompanion] = useState<CompanionProfile | null>(null);
   const [inspectingIdCardUrl, setInspectingIdCardUrl] = useState<string | null>(null);
   const [inspectingDriverLicenseUrl, setInspectingDriverLicenseUrl] = useState<string | null>(null);
+  const [inspectingExpDoc1Url, setInspectingExpDoc1Url] = useState<string | null>(null);
+  const [inspectingExpDoc2Url, setInspectingExpDoc2Url] = useState<string | null>(null);
   const [loadingDocUrl, setLoadingDocUrl] = useState<boolean>(false);
 
   const handleInspectDocument = async (comp: CompanionProfile) => {
     setInspectingCompanion(comp);
     setInspectingIdCardUrl(null);
     setInspectingDriverLicenseUrl(null);
+    setInspectingExpDoc1Url(null);
+    setInspectingExpDoc2Url(null);
 
     const idCardSource = comp.id_card_url || comp.verification_doc_url;
     const driverLicenseSource = comp.driver_license_url;
+    const expDoc1Source = comp.experience_doc_1_url;
+    const expDoc2Source = comp.experience_doc_2_url;
 
-    if (!idCardSource && !driverLicenseSource) return;
+    if (!idCardSource && !driverLicenseSource && !expDoc1Source && !expDoc2Source) return;
 
     setLoadingDocUrl(true);
     try {
@@ -102,6 +110,38 @@ export default function AdminDashboardPage() {
             .from('verification-docs')
             .createSignedUrl(driverLicenseSource, 60 * 15);
           if (data?.signedUrl) setInspectingDriverLicenseUrl(data.signedUrl);
+        }
+      }
+
+      // 3. Resolve Experience Doc 1 URL
+      if (expDoc1Source) {
+        if (
+          expDoc1Source.startsWith('http') ||
+          expDoc1Source.startsWith('blob:') ||
+          expDoc1Source.startsWith('data:')
+        ) {
+          setInspectingExpDoc1Url(expDoc1Source);
+        } else if (supabase) {
+          const { data } = await supabase.storage
+            .from('verification-docs')
+            .createSignedUrl(expDoc1Source, 60 * 15);
+          if (data?.signedUrl) setInspectingExpDoc1Url(data.signedUrl);
+        }
+      }
+
+      // 4. Resolve Experience Doc 2 URL
+      if (expDoc2Source) {
+        if (
+          expDoc2Source.startsWith('http') ||
+          expDoc2Source.startsWith('blob:') ||
+          expDoc2Source.startsWith('data:')
+        ) {
+          setInspectingExpDoc2Url(expDoc2Source);
+        } else if (supabase) {
+          const { data } = await supabase.storage
+            .from('verification-docs')
+            .createSignedUrl(expDoc2Source, 60 * 15);
+          if (data?.signedUrl) setInspectingExpDoc2Url(data.signedUrl);
         }
       }
     } catch (e) {
@@ -331,7 +371,9 @@ export default function AdminDashboardPage() {
                       {(() => {
                         const hasId = Boolean(companion.id_card_url || companion.verification_doc_url);
                         const hasDriver = Boolean(companion.driver_license_url);
-                        const docCount = (hasId ? 1 : 0) + (hasDriver ? 1 : 0);
+                        const hasExp1 = Boolean(companion.experience_doc_1_url);
+                        const hasExp2 = Boolean(companion.experience_doc_2_url);
+                        const docCount = (hasId ? 1 : 0) + (hasDriver ? 1 : 0) + (hasExp1 ? 1 : 0) + (hasExp2 ? 1 : 0);
 
                         return docCount > 0 ? (
                           <button
@@ -559,7 +601,7 @@ export default function AdminDashboardPage() {
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-blue-600" />
-                  ตรวจสอบเอกสารยืนยันตัวตน (2 เอกสาร)
+                  ตรวจสอบเอกสารยืนยันตัวตนและประสบการณ์ (4 รายการ)
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {allProfiles.find((p) => p.id === inspectingCompanion.id)?.full_name || 'ผู้ร่วมเดินทาง'} (รหัส: #{inspectingCompanion.id.slice(-6).toUpperCase()})
@@ -580,13 +622,13 @@ export default function AdminDashboardPage() {
                 <p className="text-xs font-semibold">กำลังดึงลิงก์เอกสารที่ปลอดภัย (Signed URL)...</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto p-1">
                 {/* 1. ID Card Card */}
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                        <CreditCard className="w-4 h-4 text-blue-600" />
+                        <CreditCard className="w-4 h-4 text-emerald-600" />
                         <span>1. ภาพถ่ายบัตรประชาชน</span>
                       </div>
                       {inspectingIdCardUrl ? (
@@ -600,12 +642,12 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[220px] max-h-[300px] flex items-center justify-center overflow-hidden p-2">
+                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[200px] max-h-[260px] flex items-center justify-center overflow-hidden p-2">
                       {inspectingIdCardUrl ? (
                         <img
                           src={inspectingIdCardUrl}
                           alt="บัตรประจำตัวประชาชน"
-                          className="max-h-[280px] w-auto object-contain rounded-lg"
+                          className="max-h-[240px] w-auto object-contain rounded-lg"
                         />
                       ) : (
                         <div className="text-center py-8 text-slate-400 space-y-1">
@@ -634,11 +676,11 @@ export default function AdminDashboardPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                        <Car className="w-4 h-4 text-emerald-600" />
+                        <Car className="w-4 h-4 text-blue-600" />
                         <span>2. ภาพถ่ายใบขับขี่</span>
                       </div>
                       {inspectingDriverLicenseUrl ? (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
                           แนบแล้ว
                         </span>
                       ) : (
@@ -648,12 +690,12 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[220px] max-h-[300px] flex items-center justify-center overflow-hidden p-2">
+                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[200px] max-h-[260px] flex items-center justify-center overflow-hidden p-2">
                       {inspectingDriverLicenseUrl ? (
                         <img
                           src={inspectingDriverLicenseUrl}
                           alt="ใบอนุญาตขับรถ"
-                          className="max-h-[280px] w-auto object-contain rounded-lg"
+                          className="max-h-[240px] w-auto object-contain rounded-lg"
                         />
                       ) : (
                         <div className="text-center py-8 text-slate-400 space-y-1">
@@ -669,10 +711,106 @@ export default function AdminDashboardPage() {
                       href={inspectingDriverLicenseUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-emerald-600 hover:text-emerald-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 py-1 hover:underline cursor-pointer"
+                      className="text-blue-600 hover:text-blue-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 py-1 hover:underline cursor-pointer"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       เปิดดูใบขับขี่ขนาดเต็ม
+                    </a>
+                  )}
+                </div>
+
+                {/* 3. Experience Doc 1 Card */}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <Award className="w-4 h-4 text-amber-600" />
+                        <span>3. เอกสารรับรองประสบการณ์ 1</span>
+                      </div>
+                      {inspectingExpDoc1Url ? (
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                          แนบแล้ว
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
+                          ยังไม่แนบ
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[200px] max-h-[260px] flex items-center justify-center overflow-hidden p-2">
+                      {inspectingExpDoc1Url ? (
+                        <img
+                          src={inspectingExpDoc1Url}
+                          alt="เอกสารรับรองประสบการณ์ 1"
+                          className="max-h-[240px] w-auto object-contain rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-slate-400 space-y-1">
+                          <Award className="w-10 h-10 mx-auto stroke-1" />
+                          <p className="text-xs font-semibold text-slate-500">ยังไม่ได้อัปโหลดเอกสารประสบการณ์ 1</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {inspectingExpDoc1Url && (
+                    <a
+                      href={inspectingExpDoc1Url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-700 hover:text-amber-800 text-[11px] font-bold inline-flex items-center justify-center gap-1 py-1 hover:underline cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      เปิดดูเอกสารประสบการณ์ 1 ขนาดเต็ม
+                    </a>
+                  )}
+                </div>
+
+                {/* 4. Experience Doc 2 Card */}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <FileCheck className="w-4 h-4 text-purple-600" />
+                        <span>4. เอกสารรับรองประสบการณ์ 2</span>
+                      </div>
+                      {inspectingExpDoc2Url ? (
+                        <span className="text-[10px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full">
+                          แนบแล้ว
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
+                          ยังไม่แนบ
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200/80 bg-white min-h-[200px] max-h-[260px] flex items-center justify-center overflow-hidden p-2">
+                      {inspectingExpDoc2Url ? (
+                        <img
+                          src={inspectingExpDoc2Url}
+                          alt="เอกสารรับรองประสบการณ์ 2"
+                          className="max-h-[240px] w-auto object-contain rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-slate-400 space-y-1">
+                          <FileCheck className="w-10 h-10 mx-auto stroke-1" />
+                          <p className="text-xs font-semibold text-slate-500">ยังไม่ได้อัปโหลดเอกสารประสบการณ์ 2</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {inspectingExpDoc2Url && (
+                    <a
+                      href={inspectingExpDoc2Url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-700 hover:text-purple-800 text-[11px] font-bold inline-flex items-center justify-center gap-1 py-1 hover:underline cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      เปิดดูเอกสารประสบการณ์ 2 ขนาดเต็ม
                     </a>
                   )}
                 </div>

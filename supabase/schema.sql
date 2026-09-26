@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS public.companion_profiles (
     verification_doc_url TEXT,
     id_card_url TEXT,
     driver_license_url TEXT,
+    experience_doc_1_url TEXT,
+    experience_doc_2_url TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     rating_avg NUMERIC(3, 2) DEFAULT 5.00,
     rating_count INT DEFAULT 0,
