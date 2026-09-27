@@ -535,6 +535,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             duration_hours: newBookingData.duration_hours,
             estimated_cost: newBookingData.estimated_cost,
             special_notes: newBookingData.special_notes || '',
+            customer_phone: newBookingData.customer_phone || null,
             is_for_other: Boolean(newBookingData.is_for_other),
             passenger_name: newBookingData.passenger_name || null,
             passenger_age: newBookingData.passenger_age ? Number(newBookingData.passenger_age) : null,
@@ -629,6 +630,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     setReviews((prev) => [newReview, ...prev]);
+
+    // Recalculate companion rating immediately in React state
+    setCompanions((prev) =>
+      prev.map((c) => {
+        if (c.id === reviewData.companion_id) {
+          const compRevs = [newReview, ...reviews.filter((r) => r.companion_id === reviewData.companion_id)];
+          const newAvg = Number(
+            (compRevs.reduce((sum, r) => sum + r.rating, 0) / compRevs.length).toFixed(1)
+          );
+          return {
+            ...c,
+            rating_avg: newAvg,
+            rating_count: compRevs.length,
+          };
+        }
+        return c;
+      })
+    );
 
     const supabase = createClient();
     if (supabase && isUuid(reviewData.booking_id) && isUuid(reviewData.customer_id) && isUuid(reviewData.companion_id)) {
