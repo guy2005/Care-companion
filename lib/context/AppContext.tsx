@@ -105,6 +105,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             rating_count: Number(c.rating_count) || 0,
             display_name: c.display_name || joinedProfile?.full_name || fallbackProfile?.full_name || 'ผู้ร่วมเดินทาง',
             avatar_url: c.avatar_url || undefined,
+            phone: c.phone || undefined,
             id_card_url: c.id_card_url || c.verification_doc_url || undefined,
             driver_license_url: c.driver_license_url || undefined,
             experience_doc_1_url: c.experience_doc_1_url || undefined,
@@ -148,12 +149,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 ...compProfilesMap[m.id],
                 display_name: compProfilesMap[m.id].display_name || item.display_name,
                 avatar_url: compProfilesMap[m.id].avatar_url || item.avatar_url,
-                profile: item.profile
-                  ? {
-                      ...item.profile,
-                      ...(compProfilesMap[m.id].phone ? { phone: compProfilesMap[m.id].phone } : {}),
-                    }
-                  : item.profile,
+                phone: compProfilesMap[m.id].phone !== undefined ? compProfilesMap[m.id].phone : item.phone,
               };
             }
             return item;
@@ -748,6 +744,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     phone?: string
   ) => {
     const existingComp = companions.find((c) => c.id === companionId);
+    const targetPhone = data.phone !== undefined ? data.phone : (phone !== undefined ? phone : existingComp?.phone);
 
     setCompanions((prev) =>
       prev.map((c) => {
@@ -757,26 +754,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ...data,
             display_name: data.display_name !== undefined ? data.display_name : c.display_name,
             avatar_url: data.avatar_url !== undefined ? data.avatar_url : c.avatar_url,
-            profile: c.profile
-              ? {
-                  ...c.profile,
-                  ...(phone !== undefined ? { phone } : {}),
-                }
-              : c.profile,
+            phone: targetPhone !== undefined ? targetPhone : c.phone,
             updated_at: new Date().toISOString(),
           };
         }
         return c;
       })
     );
-
-    // Only update phone if explicitly passed (NEVER touch customer full_name or avatar_url)
-    if (phone !== undefined) {
-      setCurrentUser((prev) => (prev && prev.id === companionId ? { ...prev, phone } : prev));
-      setAllProfiles((prev) =>
-        prev.map((p) => (p.id === companionId ? { ...p, phone, updated_at: new Date().toISOString() } : p))
-      );
-    }
 
     // Save mock companion override in localStorage for demo mode
     if (!isUuid(companionId) && typeof window !== 'undefined') {
@@ -786,7 +770,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         compMap[companionId] = {
           ...(compMap[companionId] || {}),
           ...data,
-          ...(phone !== undefined ? { phone } : {}),
+          phone: targetPhone,
         };
         localStorage.setItem('care_companion_mock_companion_profiles', JSON.stringify(compMap));
       } catch (e) {
@@ -813,6 +797,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: companionId,
         display_name: data.display_name ?? existingComp?.display_name ?? null,
         avatar_url: data.avatar_url ?? existingComp?.avatar_url ?? null,
+        phone: targetPhone ?? existingComp?.phone ?? null,
         bio: data.bio ?? (existingComp?.bio || ''),
         experience_years: data.experience_years ?? (existingComp?.experience_years || 0),
         skills: data.skills ?? (existingComp?.skills || []),
@@ -831,9 +816,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.from('companion_profiles').upsert(upsertPayload);
       if (error) {
         // If error occurred (e.g. columns not yet added via SQL migration), fallback without extra columns
-        console.warn('Upsert with separate display_name/avatar columns failed, falling back:', error.message);
+        console.warn('Upsert with separate columns failed, falling back:', error.message);
         delete upsertPayload.display_name;
         delete upsertPayload.avatar_url;
+        delete upsertPayload.phone;
         delete upsertPayload.id_card_url;
         delete upsertPayload.driver_license_url;
         delete upsertPayload.experience_doc_1_url;
@@ -841,19 +827,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const { error: fallbackErr } = await supabase.from('companion_profiles').upsert(upsertPayload);
         if (fallbackErr) {
           console.error('Supabase updateCompanionProfile fallback error:', fallbackErr.message);
-        }
-      }
-
-      if (phone !== undefined) {
-        const { error: profErr } = await supabase
-          .from('profiles')
-          .update({
-            phone: phone.trim(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', companionId);
-        if (profErr) {
-          console.error('Supabase update profile phone error:', profErr.message);
         }
       }
     }

@@ -60,7 +60,7 @@ export default function CompanionProfilePage() {
   };
   const userDetails = allProfiles.find((p) => p.id === currentUser?.id) || currentUser;
 
-  const [phone, setPhone] = useState(userDetails?.phone ? formatPhoneNumber(userDetails.phone) : '');
+  const [phone, setPhone] = useState(companion.phone ? formatPhoneNumber(companion.phone) : (userDetails?.phone ? formatPhoneNumber(userDetails.phone) : ''));
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState(companion.display_name || companion.profile?.full_name || userDetails?.full_name || '');
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
@@ -150,7 +150,9 @@ export default function CompanionProfilePage() {
         setExpDoc2Url(active.experience_doc_2_url);
       }
     }
-    if (currentProf?.phone) {
+    if (active?.phone) {
+      setPhone(formatPhoneNumber(active.phone));
+    } else if (currentProf?.phone && !phone) {
       setPhone(formatPhoneNumber(currentProf.phone));
     }
   }, [companions, allProfiles, currentUser]);
@@ -584,6 +586,7 @@ export default function CompanionProfilePage() {
           service_areas: serviceAreas,
           display_name: displayName.trim(),
           avatar_url: finalAvatarUrl || undefined,
+          phone: phone.trim(),
           id_card_url: finalIdCardUrl || undefined,
           driver_license_url: finalDriverLicenseUrl || undefined,
           experience_doc_1_url: finalExpDoc1Url || undefined,
@@ -750,11 +753,11 @@ export default function CompanionProfilePage() {
                   )}
                 </div>
 
-                {/* Phone */}
+                {/* Companion Phone */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
                     <span className="flex items-center gap-1">
-                      <span>เบอร์โทรศัพท์สำหรับติดต่อ</span>
+                      <span>เบอร์โทรศัพท์สำหรับติดต่องาน (Companion Phone)</span>
                       <span className="text-rose-500">*</span>
                     </span>
                     <span className={`text-[10px] font-bold ${phone.length === 12 ? 'text-emerald-600' : 'text-slate-400'}`}>
@@ -784,7 +787,7 @@ export default function CompanionProfilePage() {
                     </p>
                   ) : (
                     <p className="text-[11px] text-slate-400">
-                      * รูปแบบ: 08x-xxx-xxxx รวม 12 ตัวอักษร
+                      * เบอร์นี้จะใช้สำหรับงานผู้ร่วมเดินทางโดยเฉพาะ (รูปแบบ: 08x-xxx-xxxx รวม 12 ตัวอักษร)
                     </p>
                   )}
                 </div>

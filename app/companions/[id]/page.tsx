@@ -37,6 +37,7 @@ export default function CompanionDetailPage({ params }: PageProps) {
   const profile = allProfiles.find((p) => p.id === resolvedParams.id) || companion?.profile || INITIAL_PROFILES[resolvedParams.id];
   const companionName = companion?.display_name || profile?.full_name || 'ผู้ร่วมเดินทาง';
   const companionAvatar = companion?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
+  const companionPhone = companion?.phone || profile?.phone;
   const companionReviews = reviews.filter((r) => r.companion_id === resolvedParams.id);
   const isSelf = Boolean(currentUser && currentUser.id === resolvedParams.id);
   const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
@@ -135,13 +136,13 @@ export default function CompanionDetailPage({ params }: PageProps) {
 
                 {/* Phone contact */}
                 <div className="pt-1">
-                  {profile.phone ? (
+                  {companionPhone ? (
                     <a
-                      href={`tel:${profile.phone}`}
+                      href={`tel:${companionPhone}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs"
                     >
                       <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>เบอร์ติดต่อ: {profile.phone}</span>
+                      <span>เบอร์ติดต่อ: {companionPhone}</span>
                     </a>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 text-slate-500 text-xs font-medium border border-slate-200">
@@ -368,13 +369,13 @@ export default function CompanionDetailPage({ params }: PageProps) {
                   </Link>
                 )}
 
-                {profile.phone && (
+                {companionPhone && (
                   <a
-                    href={`tel:${profile.phone}`}
+                    href={`tel:${companionPhone}`}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition text-xs shadow-2xs"
                   >
                     <Phone className="w-4 h-4 text-emerald-600" />
-                    <span>โทรติดต่อผู้ช่วย: {profile.phone}</span>
+                    <span>โทรติดต่อผู้ช่วย: {companionPhone}</span>
                   </a>
                 )}
               </div>
@@ -388,13 +389,13 @@ export default function CompanionDetailPage({ params }: PageProps) {
                   <span>จองผู้ช่วยท่านนี้</span>
                 </Link>
 
-                {profile.phone && (
+                {companionPhone && (
                   <a
-                    href={`tel:${profile.phone}`}
+                    href={`tel:${companionPhone}`}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition text-xs shadow-2xs"
                   >
                     <Phone className="w-4 h-4 text-emerald-600" />
-                    <span>โทรสอบถามผู้ช่วย: {profile.phone}</span>
+                    <span>โทรสอบถามผู้ช่วย: {companionPhone}</span>
                   </a>
                 )}
               </div>

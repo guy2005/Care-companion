@@ -306,6 +306,7 @@ export default function CustomerDashboardPage() {
               ? allProfiles.find((p) => p.id === booking.companion_id) || INITIAL_PROFILES[booking.companion_id] || compData?.profile
               : null;
             const companionDisplayName = compData?.display_name || companionProfile?.full_name || 'ผู้ร่วมเดินทาง';
+            const companionPhone = compData?.phone || companionProfile?.phone;
             const hasReviewed = reviews.some((r) => r.booking_id === booking.id);
 
             return (
@@ -370,9 +371,9 @@ export default function CustomerDashboardPage() {
                       <div className="flex items-center gap-1 text-slate-600">
                         <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                         <span>โทร: </span>
-                        {companionProfile.phone ? (
-                          <a href={`tel:${companionProfile.phone}`} className="font-bold text-emerald-700 hover:underline">
-                            {companionProfile.phone}
+                        {companionPhone ? (
+                          <a href={`tel:${companionPhone}`} className="font-bold text-emerald-700 hover:underline">
+                            {companionPhone}
                           </a>
                         ) : (
                           <span className="text-slate-400">ยังไม่ได้ระบุ</span>
@@ -443,13 +444,13 @@ export default function CustomerDashboardPage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2">
-                  {companionProfile?.phone && (booking.status === 'accepted' || booking.status === 'in_progress') && (
+                  {companionPhone && (booking.status === 'accepted' || booking.status === 'in_progress') && (
                     <a
-                      href={`tel:${companionProfile.phone}`}
+                      href={`tel:${companionPhone}`}
                       className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] justify-center rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
                     >
                       <Phone className="w-4 h-4 text-emerald-600" />
-                      <span>โทรหาผู้ช่วย ({companionProfile.phone})</span>
+                      <span>โทรหาผู้ช่วย ({companionPhone})</span>
                     </a>
                   )}
 

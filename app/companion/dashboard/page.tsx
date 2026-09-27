@@ -113,6 +113,7 @@ export default function CompanionDashboardPage() {
   const userDetails = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
   const companionDisplayName = companionProfile?.display_name || userDetails?.full_name || 'ผู้ร่วมเดินทาง';
   const companionAvatar = companionProfile?.avatar_url;
+  const companionPhone = companionProfile?.phone || userDetails?.phone;
 
   // Filter Bookings
   // 1. Requests: Pending jobs directed to this companion OR open jobs (companion_id is null)
@@ -281,12 +282,12 @@ export default function CompanionDashboardPage() {
             </div>
             <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-600 mt-1.5">
               <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>เบอร์ติดต่อของคุณ:</span>
-              {userDetails?.phone ? (
-                <span className="font-bold text-slate-800">{userDetails.phone}</span>
+              <span>เบอร์ติดต่องานของคุณ:</span>
+              {companionPhone ? (
+                <span className="font-bold text-slate-800">{companionPhone}</span>
               ) : (
                 <Link href="/companion/profile" className="text-amber-600 font-semibold hover:underline">
-                  (ยังไม่ได้ระบุเบอร์โทร - คลิกเพื่อเพิ่ม)
+                  (ยังไม่ได้ระบุเบอร์โทรงาน - คลิกเพื่อเพิ่ม)
                 </Link>
               )}
             </div>

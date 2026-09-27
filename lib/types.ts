@@ -34,6 +34,7 @@ export interface CompanionProfile {
   experience_doc_2_url?: string;
   avatar_url?: string;
   display_name?: string;
+  phone?: string;
   is_available: boolean;
   rating_avg: number;
   rating_count: number;

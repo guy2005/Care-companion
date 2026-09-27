@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.companion_profiles (
     experience_doc_2_url TEXT,
     avatar_url TEXT,
     display_name TEXT,
+    phone TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     rating_avg NUMERIC(3, 2) DEFAULT 5.00,
     rating_count INT DEFAULT 0,
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS public.companion_profiles (
 
 ALTER TABLE public.companion_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE public.companion_profiles ADD COLUMN IF NOT EXISTS display_name TEXT;
+ALTER TABLE public.companion_profiles ADD COLUMN IF NOT EXISTS phone TEXT;
 
 COMMENT ON TABLE public.companion_profiles IS 'ข้อมูลประวัติ ประสบการณ์ ทักษะ พื้นที่บริการ ค่าบริการ ชื่อและรูปโปรไฟล์เฉพาะของผู้ร่วมเดินทาง';
 

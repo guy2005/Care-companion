@@ -788,14 +788,15 @@ function BookingForm() {
             ) : selectedCompanion && (() => {
               const p = allProfiles.find((prof) => prof.id === selectedCompanion.id) || INITIAL_PROFILES[selectedCompanion.id] || selectedCompanion.profile;
               const selName = selectedCompanion.display_name || p?.full_name || 'ผู้ช่วย';
+              const selPhone = selectedCompanion.phone || p?.phone;
               return (
                 <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-slate-800">ผู้ช่วยที่เลือก: {selName}</span>
-                    {p?.phone && (
+                    {selPhone && (
                       <span className="inline-flex items-center gap-1 text-emerald-800 font-semibold bg-white px-2 py-0.5 rounded-lg border border-emerald-200">
                         <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>โทร: {p.phone}</span>
+                        <span>โทร: {selPhone}</span>
                       </span>
                     )}
                   </div>

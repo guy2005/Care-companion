@@ -361,7 +361,7 @@ export default function AdminDashboardPage() {
                           <span>•</span>
                           <span className="flex items-center gap-1 font-semibold text-slate-700">
                             <Phone className="w-3 h-3 text-emerald-600" />
-                            {profile?.phone || 'ยังไม่ได้ระบุเบอร์โทร'}
+                            {companion.phone || profile?.phone || 'ยังไม่ได้ระบุเบอร์โทร'}
                           </span>
                         </div>
                       </div>

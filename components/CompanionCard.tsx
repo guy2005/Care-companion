@@ -17,6 +17,7 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
   const profile = companion.profile || allProfiles.find((p) => p.id === companion.id) || INITIAL_PROFILES[companion.id];
   const name = companion.display_name || profile?.full_name || 'ผู้ร่วมเดินทาง';
   const avatar = companion.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
+  const companionPhone = companion.phone || profile?.phone;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden group">
@@ -83,10 +84,10 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
                   ฿{companion.hourly_rate}{' '}
                   <span className="text-xs font-normal text-slate-500">/ ชั่วโมง</span>
                 </div>
-                {profile?.phone && (
+                {companionPhone && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
                     <Phone className="w-3 h-3 text-emerald-600" />
-                    <span>{profile.phone}</span>
+                    <span>{companionPhone}</span>
                   </span>
                 )}
               </div>
