@@ -26,9 +26,13 @@ import { UserRole } from '@/lib/types';
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, role, switchRole, signOut } = useApp();
+  const { currentUser, currentCompanionProfile, role, switchRole, signOut } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+
+  const navAvatar = (role === 'companion' && currentCompanionProfile?.avatar_url)
+    ? currentCompanionProfile.avatar_url
+    : currentUser?.avatar_url;
 
   const handleRoleSwitch = async (newRole: UserRole) => {
     await switchRole(newRole);
@@ -301,9 +305,9 @@ export default function Navbar() {
                     onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
                     className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 transition cursor-pointer"
                   >
-                    {currentUser.avatar_url ? (
+                    {navAvatar ? (
                       <Image
-                        src={currentUser.avatar_url}
+                        src={navAvatar}
                         alt={currentUser.full_name}
                         width={28}
                         height={28}
@@ -412,9 +416,9 @@ export default function Navbar() {
           {currentUser ? (
             <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                {currentUser.avatar_url ? (
+                {navAvatar ? (
                   <Image
-                    src={currentUser.avatar_url}
+                    src={navAvatar}
                     alt={currentUser.full_name}
                     width={40}
                     height={40}

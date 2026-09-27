@@ -42,13 +42,16 @@ CREATE TABLE IF NOT EXISTS public.companion_profiles (
     driver_license_url TEXT,
     experience_doc_1_url TEXT,
     experience_doc_2_url TEXT,
+    avatar_url TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     rating_avg NUMERIC(3, 2) DEFAULT 5.00,
     rating_count INT DEFAULT 0,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
-COMMENT ON TABLE public.companion_profiles IS 'ข้อมูลประวัติ ประสบการณ์ ทักษะ พื้นที่บริการ และค่าบริการของผู้ร่วมเดินทาง';
+ALTER TABLE public.companion_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+COMMENT ON TABLE public.companion_profiles IS 'ข้อมูลประวัติ ประสบการณ์ ทักษะ พื้นที่บริการ ค่าบริการ และรูปโปรไฟล์เฉพาะของผู้ร่วมเดินทาง';
 
 -- Table 3: Service Categories (หมวดหมู่ประเภทธุระ)
 CREATE TABLE IF NOT EXISTS public.service_categories (
@@ -363,6 +366,9 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage Policies: avatars (Public read, authenticated upload)
+-- Folders partitioned inside bucket 'avatars':
+--   - customers/  : avatars/customers/{userId}-{timestamp}.ext
+--   - companions/ : avatars/companions/{userId}-{timestamp}.ext
 CREATE POLICY "Avatar images are publicly accessible"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'avatars');
@@ -370,6 +376,10 @@ USING (bucket_id = 'avatars');
 CREATE POLICY "Users can upload their own avatar"
 ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Users can update their own avatar"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'avatars' AND auth.role() = 'authenticated');
 
 -- Storage Policies: verification-docs (Private, only owner and admin)
 CREATE POLICY "Users can upload verification docs"

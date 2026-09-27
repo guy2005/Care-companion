@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context/AppContext';
 import { INITIAL_PROFILES } from '@/lib/mockData';
@@ -237,9 +238,20 @@ export default function CompanionDashboardPage() {
       {/* Companion Stats & Status Banner */}
       <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-emerald-500/20 shrink-0">
-            {userDetails?.full_name ? userDetails.full_name.charAt(0) : 'ป'}
-          </div>
+          {companionProfile?.avatar_url || userDetails?.avatar_url ? (
+            <Image
+              src={companionProfile?.avatar_url || userDetails?.avatar_url || ''}
+              alt={userDetails?.full_name || 'Companion'}
+              width={64}
+              height={64}
+              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-emerald-100 shadow-md shadow-emerald-500/10 shrink-0"
+              unoptimized
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-emerald-500/20 shrink-0">
+              {userDetails?.full_name ? userDetails.full_name.charAt(0) : 'ป'}
+            </div>
+          )}
           <div>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">{userDetails?.full_name}</h1>

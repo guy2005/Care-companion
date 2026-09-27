@@ -16,7 +16,7 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
   const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
   const profile = companion.profile || allProfiles.find((p) => p.id === companion.id) || INITIAL_PROFILES[companion.id];
   const name = profile?.full_name || 'ผู้ร่วมเดินทาง';
-  const avatar = profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
+  const avatar = companion.avatar_url || profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden group">

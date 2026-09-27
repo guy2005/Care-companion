@@ -328,6 +328,7 @@ export default function AdminDashboardPage() {
                     <div className="flex items-start gap-4">
                       <Image
                         src={
+                          companion.avatar_url ||
                           profile?.avatar_url ||
                           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80'
                         }

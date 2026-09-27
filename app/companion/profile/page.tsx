@@ -25,14 +25,16 @@ import {
   Car,
   Award,
   Briefcase,
-  FileCheck
+  FileCheck,
+  Camera,
+  User
 } from 'lucide-react';
 import { formatPhoneNumber, isValidPhoneNumber, isUuid } from '@/lib/formatters';
 import { createClient } from '@/lib/supabase/client';
 
 export default function CompanionProfilePage() {
   const router = useRouter();
-  const { currentUser, companions, allProfiles, updateCompanionProfile } = useApp();
+  const { currentUser, companions, allProfiles, updateCompanionProfile, uploadAvatar } = useApp();
 
   useEffect(() => {
     if (!currentUser) {
@@ -60,6 +62,16 @@ export default function CompanionProfilePage() {
 
   const [phone, setPhone] = useState(userDetails?.phone ? formatPhoneNumber(userDetails.phone) : '');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [fullName, setFullName] = useState(userDetails?.full_name || '');
+  const [fullNameError, setFullNameError] = useState<string | null>(null);
+
+  // Companion Avatar State (Stored in avatars/companions/)
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>(companion.avatar_url || userDetails?.avatar_url || '');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(companion.avatar_url || userDetails?.avatar_url || null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
   const [bio, setBio] = useState(companion.bio || '');
   const [experienceYears, setExperienceYears] = useState(companion.experience_years || 1);
   const [hourlyRate, setHourlyRate] = useState(companion.hourly_rate || 250);
@@ -108,12 +120,18 @@ export default function CompanionProfilePage() {
   useEffect(() => {
     if (!currentUser) return;
     const active = companions.find((c) => c.id === currentUser.id);
+    const currentProf = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
+
     if (active) {
       setBio(active.bio || '');
       setExperienceYears(active.experience_years ?? 1);
       setHourlyRate(active.hourly_rate ?? 250);
       setSkills(active.skills || []);
       setServiceAreas(active.service_areas || []);
+      if (active.avatar_url) {
+        setAvatarUrl(active.avatar_url);
+        if (!avatarFile) setAvatarPreview(active.avatar_url);
+      }
       if (active.id_card_url || active.verification_doc_url) {
         setIdCardUrl(active.id_card_url || active.verification_doc_url || '');
       }
@@ -127,11 +145,33 @@ export default function CompanionProfilePage() {
         setExpDoc2Url(active.experience_doc_2_url);
       }
     }
-    const currentProf = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
+    if (currentProf?.full_name) {
+      setFullName(currentProf.full_name);
+    }
     if (currentProf?.phone) {
       setPhone(formatPhoneNumber(currentProf.phone));
     }
+    if (!active?.avatar_url && currentProf?.avatar_url && !avatarFile) {
+      setAvatarUrl(currentProf.avatar_url);
+      setAvatarPreview(currentProf.avatar_url);
+    }
   }, [companions, allProfiles, currentUser]);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('กรุณาเลือกไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('ขนาดไฟล์รูปภาพต้องไม่เกิน 5MB');
+      return;
+    }
+    setAvatarError(null);
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
   // Load preview for existing ID Card
   useEffect(() => {
@@ -388,6 +428,13 @@ export default function CompanionProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate full name
+    if (!fullName.trim()) {
+      setFullNameError('กรุณาระบุชื่อ-นามสกุล หรือชื่อที่ใช้ให้บริการ');
+      return;
+    }
+    setFullNameError(null);
+
     // Strict validation: must be 10 digits and 2 dashes (12 characters total, e.g. 086-555-1234)
     if (!isValidPhoneNumber(phone)) {
       setPhoneError('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และมีเครื่องหมายขีด (-) รวม 12 ตัวอักษร เช่น 086-555-1234');
@@ -396,6 +443,7 @@ export default function CompanionProfilePage() {
 
     setPhoneError(null);
     setIsSaving(true);
+    setAvatarError(null);
     setIdCardError(null);
     setDriverLicenseError(null);
     setExpDoc1Error(null);
@@ -516,6 +564,16 @@ export default function CompanionProfilePage() {
         }
       }
 
+      // 5. Upload Companion Avatar to folder 'companions' if changed
+      let finalAvatarUrl = avatarUrl;
+      if (avatarFile) {
+        const uploadedAvatar = await uploadAvatar(avatarFile, 'companions');
+        if (uploadedAvatar) {
+          finalAvatarUrl = uploadedAvatar;
+          setAvatarUrl(uploadedAvatar);
+        }
+      }
+
       const hasNewDocs = Boolean(idCardFile || driverLicenseFile || expDoc1File || expDoc2File);
 
       await updateCompanionProfile(
@@ -526,6 +584,7 @@ export default function CompanionProfilePage() {
           hourly_rate: hourlyRate,
           skills,
           service_areas: serviceAreas,
+          avatar_url: finalAvatarUrl || undefined,
           id_card_url: finalIdCardUrl || undefined,
           driver_license_url: finalDriverLicenseUrl || undefined,
           experience_doc_1_url: finalExpDoc1Url || undefined,
@@ -534,8 +593,12 @@ export default function CompanionProfilePage() {
           // When a new document is submitted, mark as pending verification for admin inspection
           ...(hasNewDocs ? { is_verified: false } : {}),
         },
-        phone.trim()
+        phone.trim(),
+        fullName.trim()
       );
+
+      setAvatarFile(null);
+      setAvatarError(null);
 
       setIdCardFile(null);
       setIdCardError(null);
@@ -588,57 +651,147 @@ export default function CompanionProfilePage() {
       {/* Form Card */}
       <form onSubmit={handleSave} className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
         {/* Name & Phone Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500">ชื่อผู้ให้บริการ</p>
-              <p className="text-sm font-bold text-slate-800">{userDetails?.full_name}</p>
-            </div>
-            {companion.is_verified && (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                ยืนยันตัวตนแล้ว
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                <span>เบอร์โทรศัพท์สำหรับติดต่อ (บันทึกลงระบบ Supabase)</span>
-                <span className="text-rose-500">*</span>
-              </span>
-              <span className={`text-[10px] font-bold ${phone.length === 12 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                {phone.length}/12 ตัว
-              </span>
-            </label>
-            <div className="relative">
+        {/* Profile Picture & Identity Card */}
+        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-50/50 via-white to-slate-50 border border-emerald-100 shadow-2xs space-y-5">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+            {/* Avatar Uploader Circle */}
+            <div className="relative group shrink-0">
               <input
-                type="tel"
-                placeholder="086-555-1234"
-                maxLength={12}
-                value={phone}
-                onChange={handlePhoneChange}
-                required
-                className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 font-mono tracking-wider transition ${
-                  phoneError
-                    ? 'border-rose-400 ring-2 ring-rose-400/20'
-                    : 'border-slate-200 focus:ring-emerald-500'
-                }`}
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/jpg"
+                className="hidden"
+                onChange={handleAvatarChange}
               />
-              <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden ring-4 ring-white shadow-md relative bg-emerald-100 flex items-center justify-center">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt={fullName || 'Companion'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-emerald-600" />
+                )}
+                {/* Overlay upload button on hover/click */}
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer"
+                  title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์ผู้ร่วมเดินทาง"
+                >
+                  <Camera className="w-6 h-6 mb-1" />
+                  <span className="text-[10px] font-bold">เปลี่ยนรูป</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="absolute -bottom-1.5 -right-1.5 p-2 rounded-full bg-emerald-600 text-white shadow-md hover:bg-emerald-700 transition cursor-pointer"
+                title="เปลี่ยนรูปภาพโปรไฟล์"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
             </div>
-            {phoneError ? (
-              <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 mt-1">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{phoneError}</span>
-              </p>
-            ) : (
-              <p className="text-[11px] text-slate-400">
-                * พิมพ์เฉพาะตัวเลข ระบบจะใส่ขีด (-) ให้อัตโนมัติ (เช่น 086 ➔ ขีด ➔ 555 ➔ ขีด ➔ 1234 รวม 12 ตัวอักษร)
-              </p>
-            )}
+
+            {/* Profile Info Fields */}
+            <div className="flex-1 w-full space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <User className="w-4 h-4 text-emerald-600" />
+                    <span>รูปและชื่อผู้ร่วมเดินทาง (Companion Identity)</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    รูปภาพนี้จัดเก็บแยกในโฟลเดอร์ <code className="bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded font-mono text-[10px]">avatars/companions/</code> สำหรับงานผู้ร่วมเดินทางโดยเฉพาะ
+                  </p>
+                </div>
+                {companion.is_verified ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    ยืนยันตัวตนแล้ว (Verified)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    รอการตรวจสอบเอกสาร (Pending)
+                  </span>
+                )}
+              </div>
+
+              {avatarError && (
+                <p className="text-xs text-rose-500 font-semibold flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>{avatarError}</span>
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Full Name / Display Name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <span>ชื่อ-นามสกุล / ชื่อเรียกที่ใช้ให้บริการ</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      if (fullNameError) setFullNameError(null);
+                    }}
+                    placeholder="เช่น คุณปรียา รักดูแล (ครูปรียา)"
+                    required
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 transition ${
+                      fullNameError ? 'border-rose-400 ring-2 ring-rose-400/20' : 'border-slate-200 focus:ring-emerald-500'
+                    }`}
+                  />
+                  {fullNameError && (
+                    <p className="text-[11px] text-rose-500 font-semibold">{fullNameError}</p>
+                  )}
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <span>เบอร์โทรศัพท์สำหรับติดต่อ</span>
+                      <span className="text-rose-500">*</span>
+                    </span>
+                    <span className={`text-[10px] font-bold ${phone.length === 12 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {phone.length}/12 ตัว
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      placeholder="086-555-1234"
+                      maxLength={12}
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      required
+                      className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 font-mono tracking-wider transition ${
+                        phoneError
+                          ? 'border-rose-400 ring-2 ring-rose-400/20'
+                          : 'border-slate-200 focus:ring-emerald-500'
+                      }`}
+                    />
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                  {phoneError ? (
+                    <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{phoneError}</span>
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-slate-400">
+                      * รูปแบบ: 08x-xxx-xxxx รวม 12 ตัวอักษร
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

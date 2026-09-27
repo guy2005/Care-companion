@@ -23,13 +23,28 @@ import {
   LogIn,
   Phone,
   HeartPulse,
-  ShieldAlert
+  ShieldAlert,
+  Edit3,
+  Camera,
+  Save
 } from 'lucide-react';
 import { Booking } from '@/lib/types';
+import { formatPhoneNumber } from '@/lib/formatters';
 
 export default function CustomerDashboardPage() {
   const router = useRouter();
-  const { currentUser, role, switchRole, bookings, allProfiles, updateBookingStatus, addReview, reviews } = useApp();
+  const { 
+    currentUser, 
+    role, 
+    switchRole, 
+    bookings, 
+    allProfiles, 
+    updateBookingStatus, 
+    addReview, 
+    reviews,
+    updateUserProfile,
+    uploadAvatar
+  } = useApp();
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
   // Review Modal State
@@ -37,6 +52,86 @@ export default function CustomerDashboardPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // Profile Edit Modal State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editFullName, setEditFullName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAvatarUrl, setEditAvatarUrl] = useState('');
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
+  const [editAvatarError, setEditAvatarError] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [editProfileSuccess, setEditProfileSuccess] = useState(false);
+  const customerAvatarInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleOpenEditProfile = () => {
+    if (!currentUser) return;
+    setEditFullName(currentUser.full_name || '');
+    setEditPhone(currentUser.phone ? formatPhoneNumber(currentUser.phone) : '');
+    setEditAvatarUrl(currentUser.avatar_url || '');
+    setEditAvatarPreview(currentUser.avatar_url || null);
+    setEditAvatarFile(null);
+    setEditAvatarError(null);
+    setEditProfileSuccess(false);
+    setIsEditProfileOpen(true);
+  };
+
+  const handleCustomerAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setEditAvatarError('กรุณาเลือกไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setEditAvatarError('ขนาดไฟล์รูปภาพต้องไม่เกิน 5MB');
+      return;
+    }
+    setEditAvatarError(null);
+    setEditAvatarFile(file);
+    setEditAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    if (!editFullName.trim()) {
+      alert('กรุณาระบุชื่อ-นามสกุล');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setEditAvatarError(null);
+
+    try {
+      let finalAvatarUrl = editAvatarUrl;
+      if (editAvatarFile) {
+        // Upload to folder 'customers' inside bucket 'avatars'
+        const uploaded = await uploadAvatar(editAvatarFile, 'customers');
+        if (uploaded) {
+          finalAvatarUrl = uploaded;
+        }
+      }
+
+      await updateUserProfile({
+        full_name: editFullName.trim(),
+        phone: editPhone.trim() || undefined,
+        avatar_url: finalAvatarUrl || undefined,
+      });
+
+      setEditProfileSuccess(true);
+      setTimeout(() => {
+        setIsEditProfileOpen(false);
+        setEditProfileSuccess(false);
+      }, 1000);
+    } catch (err: any) {
+      console.error('Save customer profile error:', err);
+      alert(err?.message || 'เกิดข้อผิดพลาดในการบันทึกโปรไฟล์');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   useEffect(() => {
     if (!currentUser) {
@@ -118,9 +213,20 @@ export default function CustomerDashboardPage() {
       {/* Customer Header */}
       <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-blue-500/20 shrink-0">
-            {currentUser?.full_name ? currentUser.full_name.charAt(0) : 'ค'}
-          </div>
+          {currentUser?.avatar_url ? (
+            <Image
+              src={currentUser.avatar_url}
+              alt={currentUser.full_name}
+              width={64}
+              height={64}
+              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-blue-100 shadow-md shadow-blue-500/10 shrink-0"
+              unoptimized
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-blue-500/20 shrink-0">
+              {currentUser?.full_name ? currentUser.full_name.charAt(0) : 'ค'}
+            </div>
+          )}
           <div>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">{currentUser?.full_name}</h1>
@@ -131,16 +237,32 @@ export default function CustomerDashboardPage() {
             <p className="text-xs text-slate-500 mt-1">
               {currentUser?.email}
             </p>
+            {currentUser?.phone && (
+              <p className="text-xs text-slate-600 mt-1 flex items-center justify-center sm:justify-start gap-1 font-mono">
+                <Phone className="w-3.5 h-3.5 text-blue-600" />
+                <span>{currentUser.phone}</span>
+              </p>
+            )}
           </div>
         </div>
 
-        <Link
-          href="/bookings/new"
-          className="w-full sm:w-auto min-h-[46px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-md shadow-blue-600/20 cursor-pointer"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>สร้างคำขอบริการใหม่</span>
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={handleOpenEditProfile}
+            className="w-full sm:w-auto min-h-[46px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition active:scale-[0.98] cursor-pointer"
+          >
+            <Edit3 className="w-4 h-4 text-slate-500" />
+            <span>แก้ไขโปรไฟล์</span>
+          </button>
+
+          <Link
+            href="/bookings/new"
+            className="w-full sm:w-auto min-h-[46px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-md shadow-blue-600/20 cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>สร้างคำขอบริการใหม่</span>
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -456,6 +578,136 @@ export default function CustomerDashboardPage() {
                   className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                 >
                   {isSubmittingReview ? 'กำลังบันทึก...' : 'ส่งรีวิว'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">แก้ไขโปรไฟล์ลูกค้า</h3>
+                <p className="text-xs text-slate-500 mt-0.5">เปลี่ยนรูปโปรไฟล์และชื่อที่ใช้ในระบบ</p>
+              </div>
+              <button
+                onClick={() => setIsEditProfileOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              {/* Avatar Uploader */}
+              <div className="flex flex-col items-center gap-2">
+                <input
+                  ref={customerAvatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  className="hidden"
+                  onChange={handleCustomerAvatarChange}
+                />
+                <div className="relative group">
+                  <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-blue-50 shadow-md relative bg-blue-50 flex items-center justify-center">
+                    {editAvatarPreview ? (
+                      <img
+                        src={editAvatarPreview}
+                        alt="Avatar Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-blue-600 text-white flex items-center justify-center font-bold text-2xl">
+                        {editFullName ? editFullName.charAt(0) : 'ค'}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => customerAvatarInputRef.current?.click()}
+                      className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer"
+                    >
+                      <Camera className="w-5 h-5 mb-0.5" />
+                      <span className="text-[10px] font-bold">เปลี่ยนรูป</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => customerAvatarInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 p-2 rounded-full bg-blue-600 text-white shadow-md hover:bg-blue-700 transition cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 text-center">
+                  โฟลเดอร์จัดเก็บ: <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-mono text-[10px]">avatars/customers/</code> (ไม่เกิน 5MB)
+                </p>
+                {editAvatarError && (
+                  <p className="text-xs text-rose-500 font-semibold">{editAvatarError}</p>
+                )}
+              </div>
+
+              {/* Full Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="เช่น คุณสมชาย ใจดี"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Phone */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อ</label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(formatPhoneNumber(e.target.value))}
+                  placeholder="089-111-2222"
+                  maxLength={12}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+              </div>
+
+              {editProfileSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>บันทึกข้อมูลเรียบร้อยแล้ว</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 flex items-center gap-2 transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>กำลังบันทึก...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>บันทึกโปรไฟล์</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

@@ -26,8 +26,9 @@ interface AppContextType {
   acceptBooking: (bookingId: string, companionId: string) => Promise<void>;
   addReview: (review: Omit<Review, 'id' | 'created_at'>) => Promise<void>;
   toggleCompanionVerification: (companionId: string) => Promise<void>;
-  updateCompanionProfile: (companionId: string, data: Partial<CompanionProfile>, phone?: string) => Promise<void>;
+  updateCompanionProfile: (companionId: string, data: Partial<CompanionProfile>, phone?: string, fullName?: string) => Promise<void>;
   updateUserProfile: (data: Partial<Profile>) => Promise<void>;
+  uploadAvatar: (file: File, folder: 'customers' | 'companions') => Promise<string | null>;
   toggleCompanionAvailability: (companionId: string) => Promise<void>;
   refreshData: () => Promise<void>;
 }
@@ -102,6 +103,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             experience_years: Number(c.experience_years) || 0,
             rating_avg: Number(c.rating_avg) || 5.0,
             rating_count: Number(c.rating_count) || 0,
+            avatar_url: c.avatar_url || joinedProfile?.avatar_url || fallbackProfile?.avatar_url,
             id_card_url: c.id_card_url || c.verification_doc_url || undefined,
             driver_license_url: c.driver_license_url || undefined,
             experience_doc_1_url: c.experience_doc_1_url || undefined,
@@ -122,13 +124,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        const savedCompProfiles = typeof window !== 'undefined' ? localStorage.getItem('care_companion_mock_companion_profiles') : null;
+        let compProfilesMap: Record<string, any> = {};
+        if (savedCompProfiles) {
+          try {
+            compProfilesMap = JSON.parse(savedCompProfiles);
+          } catch (e) {
+            console.warn('Failed to parse mock companion profiles', e);
+          }
+        }
+
         const remainingMocks = INITIAL_COMPANIONS
           .filter((m) => !realIds.has(m.id))
           .map((m) => {
+            let item = { ...m };
             if (verificationsMap[m.id] !== undefined) {
-              return { ...m, is_verified: verificationsMap[m.id] };
+              item.is_verified = verificationsMap[m.id];
             }
-            return m;
+            if (compProfilesMap[m.id]) {
+              item = {
+                ...item,
+                ...compProfilesMap[m.id],
+                profile: item.profile
+                  ? {
+                      ...item.profile,
+                      ...(compProfilesMap[m.id].phone ? { phone: compProfilesMap[m.id].phone } : {}),
+                      ...(compProfilesMap[m.id].full_name ? { full_name: compProfilesMap[m.id].full_name } : {}),
+                      ...(compProfilesMap[m.id].avatar_url ? { avatar_url: compProfilesMap[m.id].avatar_url } : {}),
+                    }
+                  : item.profile,
+              };
+            }
+            return item;
           });
         setCompanions([...formattedDBComps, ...remainingMocks]);
       }
@@ -235,12 +262,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } else {
           // No active Supabase user, check if user chose a demo role
           const savedRole = localStorage.getItem('care_companion_active_role');
-          if (savedRole && INITIAL_PROFILES[`user-${savedRole}-1`]) {
-            setCurrentUser(INITIAL_PROFILES[`user-${savedRole}-1`]);
-          } else {
-            // Default demo customer for initial experience
-            setCurrentUser(INITIAL_PROFILES['user-customer-1']);
-          }
+          let baseProf = savedRole && INITIAL_PROFILES[`user-${savedRole}-1`]
+            ? { ...INITIAL_PROFILES[`user-${savedRole}-1`] }
+            : { ...INITIAL_PROFILES['user-customer-1'] };
+          try {
+            const savedOverrides = localStorage.getItem('care_companion_mock_user_profiles');
+            if (savedOverrides && baseProf) {
+              const uMap = JSON.parse(savedOverrides);
+              if (uMap[baseProf.id]) {
+                baseProf = { ...baseProf, ...uMap[baseProf.id] };
+              }
+            }
+          } catch (e) {}
+          setCurrentUser(baseProf);
           setIsAuthLoaded(true);
         }
       });
@@ -276,11 +310,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } else {
       // Fallback without Supabase
       const savedRole = localStorage.getItem('care_companion_active_role');
-      if (savedRole && INITIAL_PROFILES[`user-${savedRole}-1`]) {
-        setCurrentUser(INITIAL_PROFILES[`user-${savedRole}-1`]);
-      } else {
-        setCurrentUser(INITIAL_PROFILES['user-customer-1']);
-      }
+      let defaultProf = savedRole && INITIAL_PROFILES[`user-${savedRole}-1`]
+        ? { ...INITIAL_PROFILES[`user-${savedRole}-1`] }
+        : { ...INITIAL_PROFILES['user-customer-1'] };
+      try {
+        const savedOverrides = localStorage.getItem('care_companion_mock_user_profiles');
+        if (savedOverrides && defaultProf) {
+          const uMap = JSON.parse(savedOverrides);
+          if (uMap[defaultProf.id]) {
+            defaultProf = { ...defaultProf, ...uMap[defaultProf.id] };
+          }
+        }
+      } catch (e) {}
+      setCurrentUser(defaultProf);
       setIsAuthLoaded(true);
     }
   }, [fetchSupabaseData]);
@@ -290,7 +332,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (targetRole === 'companion') profileKey = 'user-companion-1';
     if (targetRole === 'admin') profileKey = 'user-admin-1';
 
-    const selectedProfile = INITIAL_PROFILES[profileKey];
+    let selectedProfile = { ...INITIAL_PROFILES[profileKey] };
+    try {
+      const savedOverrides = localStorage.getItem('care_companion_mock_user_profiles');
+      if (savedOverrides && selectedProfile) {
+        const uMap = JSON.parse(savedOverrides);
+        if (uMap[selectedProfile.id]) {
+          selectedProfile = { ...selectedProfile, ...uMap[selectedProfile.id] };
+        }
+      }
+    } catch (e) {}
     setCurrentUser(selectedProfile);
     localStorage.setItem('care_companion_active_role', targetRole);
   };
@@ -642,10 +693,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await fetchSupabaseData();
   };
 
+  const uploadAvatar = async (file: File, folder: 'customers' | 'companions'): Promise<string | null> => {
+    // Immediate fallback representation using FileReader Base64 Data URL
+    const getBase64 = (): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+    const base64Data = await getBase64().catch(() => null);
+
+    const supabase = createClient();
+    const userId = currentUser?.id || 'demo-user';
+
+    // If connected to Supabase and user has valid UUID, upload to bucket 'avatars' with subfolder partition
+    if (supabase && isUuid(userId)) {
+      try {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${userId}-${Date.now()}.${fileExt}`;
+        const filePath = `${folder}/${fileName}`;
+
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true,
+          });
+
+        if (!uploadErr && uploadData) {
+          const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+          if (publicUrlData?.publicUrl) {
+            return publicUrlData.publicUrl;
+          }
+        } else if (uploadErr) {
+          console.warn('Supabase storage avatar upload warning:', uploadErr.message);
+        }
+      } catch (err) {
+        console.warn('Upload avatar failed, fallback to base64:', err);
+      }
+    }
+
+    return base64Data;
+  };
+
   const updateCompanionProfile = async (
     companionId: string,
     data: Partial<CompanionProfile>,
-    phone?: string
+    phone?: string,
+    fullName?: string
   ) => {
     const existingComp = companions.find((c) => c.id === companionId);
 
@@ -653,7 +753,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       prev.map((c) => {
         if (c.id === companionId) {
           const updatedProfile = c.profile
-            ? { ...c.profile, ...(phone !== undefined ? { phone } : {}) }
+            ? { 
+                ...c.profile, 
+                ...(phone !== undefined ? { phone } : {}),
+                ...(fullName !== undefined ? { full_name: fullName } : {}),
+                ...(data.avatar_url ? { avatar_url: data.avatar_url } : {}),
+              }
             : c.profile;
           return {
             ...c,
@@ -666,11 +771,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
     );
 
-    if (phone !== undefined) {
-      setCurrentUser((prev) => (prev && prev.id === companionId ? { ...prev, phone } : prev));
+    const profileUpdates: Partial<Profile> = {};
+    if (phone !== undefined) profileUpdates.phone = phone;
+    if (fullName !== undefined) profileUpdates.full_name = fullName;
+
+    if (Object.keys(profileUpdates).length > 0) {
+      setCurrentUser((prev) => (prev && prev.id === companionId ? { ...prev, ...profileUpdates } : prev));
       setAllProfiles((prev) =>
-        prev.map((p) => (p.id === companionId ? { ...p, phone, updated_at: new Date().toISOString() } : p))
+        prev.map((p) => (p.id === companionId ? { ...p, ...profileUpdates, updated_at: new Date().toISOString() } : p))
       );
+    }
+
+    // Save mock override in localStorage for demo mode
+    if (!isUuid(companionId) && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('care_companion_mock_companion_profiles');
+        const compMap = saved ? JSON.parse(saved) : {};
+        compMap[companionId] = {
+          ...(compMap[companionId] || {}),
+          ...data,
+          ...profileUpdates,
+        };
+        localStorage.setItem('care_companion_mock_companion_profiles', JSON.stringify(compMap));
+      } catch (e) {
+        console.warn('Failed to save mock companion profile', e);
+      }
     }
 
     const supabase = createClient();
@@ -697,6 +822,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         hourly_rate: data.hourly_rate ?? (existingComp?.hourly_rate || 250),
         is_verified: isVerifiedVal,
         is_available: isAvailableVal,
+        avatar_url: data.avatar_url ?? existingComp?.avatar_url ?? null,
         verification_doc_url: data.id_card_url ?? data.verification_doc_url ?? existingComp?.verification_doc_url ?? null,
         id_card_url: data.id_card_url ?? existingComp?.id_card_url ?? null,
         driver_license_url: data.driver_license_url ?? existingComp?.driver_license_url ?? null,
@@ -708,7 +834,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.from('companion_profiles').upsert(upsertPayload);
       if (error) {
         // If error occurred (e.g. columns not yet added via SQL migration), fallback without extra columns
-        console.warn('Upsert with separate doc columns failed, falling back:', error.message);
+        console.warn('Upsert with separate doc/avatar columns failed, falling back:', error.message);
+        delete upsertPayload.avatar_url;
         delete upsertPayload.id_card_url;
         delete upsertPayload.driver_license_url;
         delete upsertPayload.experience_doc_1_url;
@@ -719,16 +846,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (phone !== undefined) {
+      if (Object.keys(profileUpdates).length > 0) {
         const { error: profErr } = await supabase
           .from('profiles')
           .update({
-            phone: phone.trim(),
+            ...profileUpdates,
             updated_at: new Date().toISOString(),
           })
           .eq('id', companionId);
         if (profErr) {
-          console.error('Supabase update profile phone error:', profErr.message);
+          console.error('Supabase update profile error:', profErr.message);
         }
       }
     }
@@ -740,6 +867,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updated = { ...currentUser, ...data, updated_at: new Date().toISOString() };
     setCurrentUser(updated);
     setAllProfiles((prev) => prev.map((p) => (p.id === currentUser.id ? { ...p, ...data } : p)));
+
+    // Save mock user overrides in localStorage
+    if (!isUuid(currentUser.id) && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('care_companion_mock_user_profiles');
+        const userMap = saved ? JSON.parse(saved) : {};
+        userMap[currentUser.id] = {
+          ...(userMap[currentUser.id] || {}),
+          ...data,
+        };
+        localStorage.setItem('care_companion_mock_user_profiles', JSON.stringify(userMap));
+      } catch (e) {
+        console.warn('Failed to save mock user profile', e);
+      }
+    }
 
     const supabase = createClient();
     if (supabase && isUuid(currentUser.id)) {
@@ -817,6 +959,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         toggleCompanionVerification,
         updateCompanionProfile,
         updateUserProfile,
+        uploadAvatar,
         toggleCompanionAvailability,
         refreshData: fetchSupabaseData,
       }}
