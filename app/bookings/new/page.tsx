@@ -94,7 +94,6 @@ function BookingForm() {
   const ratePerHour = selectedCompanion ? selectedCompanion.hourly_rate : 250;
   const estimatedCost = Math.round(durationHours * ratePerHour);
 
-  const isSelfSelected = Boolean(currentUser && selectedCompanionId && selectedCompanionId === currentUser.id);
   const isCompanionOrAdmin = Boolean(currentUser && (role === 'companion' || role === 'admin'));
 
   // Geolocation Handler: Get user's current GPS location & reverse geocode
@@ -764,11 +763,9 @@ function BookingForm() {
                 .map((c) => {
                   const p = allProfiles.find((prof) => prof.id === c.id) || INITIAL_PROFILES[c.id] || c.profile;
                   const cName = c.display_name || p?.full_name || 'ผู้ช่วย';
-                  const isSelf = Boolean(currentUser && c.id === currentUser.id);
                   return (
                     <option key={c.id} value={c.id}>
                       👤 {cName} - ฿{c.hourly_rate}/ชม. (⭐ {c.rating_avg.toFixed(1)})
-                      {isSelf ? ' (โปรไฟล์ผู้ช่วยของคุณ)' : ''}
                     </option>
                   );
                 })}
@@ -781,11 +778,6 @@ function BookingForm() {
                 <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-slate-800">ผู้ช่วยที่เลือก: {selName}</span>
-                    {isSelfSelected && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                        โปรไฟล์ผู้ช่วยของคุณ
-                      </span>
-                    )}
                     {selPhone && (
                       <span className="inline-flex items-center gap-1 text-emerald-800 font-semibold bg-white px-2 py-0.5 rounded-lg border border-emerald-200">
                         <Phone className="w-3.5 h-3.5 text-emerald-600" />

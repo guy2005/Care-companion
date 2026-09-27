@@ -12,7 +12,6 @@ interface CompanionCardProps {
 
 export default function CompanionCard({ companion }: CompanionCardProps) {
   const { currentUser, role, allProfiles } = useApp();
-  const isSelf = Boolean(currentUser && currentUser.id === companion.id);
   const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
   const profile = companion.profile || allProfiles.find((p) => p.id === companion.id) || INITIAL_PROFILES[companion.id];
   const name = companion.display_name || profile?.full_name || 'ผู้ร่วมเดินทาง';
@@ -47,11 +46,6 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-slate-900 truncate">{name}</h3>
-                {isSelf && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                    👤 บัญชีของคุณ
-                  </span>
-                )}
                 {companion.is_available ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -135,7 +129,7 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
             href={`/companions/${companion.id}`}
             className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition border border-slate-200/80 group-hover:border-slate-300"
           >
-            <span>{isSelf ? 'ดูประวัติของคุณ' : 'ดูประวัติ'}</span>
+            <span>ดูประวัติ</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-slate-500" />
           </Link>
         ) : (
@@ -143,7 +137,7 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
             href={`/companions/${companion.id}`}
             className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-xs group-hover:bg-blue-700"
           >
-            <span>{isSelf ? 'ดูประวัติและจองผู้ช่วยนี้ (โปรไฟล์ของคุณ)' : 'ดูประวัติและจองผู้ช่วยนี้'}</span>
+            <span>ดูประวัติและจองผู้ช่วยนี้</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         )}

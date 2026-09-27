@@ -19,8 +19,6 @@ import {
   Heart,
   MessageSquare,
   Phone,
-  Ban,
-  AlertCircle,
   UserCheck
 } from 'lucide-react';
 
@@ -39,7 +37,6 @@ export default function CompanionDetailPage({ params }: PageProps) {
   const companionAvatar = companion?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
   const companionPhone = companion?.phone || profile?.phone;
   const companionReviews = reviews.filter((r) => r.companion_id === resolvedParams.id);
-  const isSelf = Boolean(currentUser && currentUser.id === resolvedParams.id);
   const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
 
   if (!companion || !profile) {
@@ -99,11 +96,6 @@ export default function CompanionDetailPage({ params }: PageProps) {
               <div className="space-y-2 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-black text-slate-900">{companionName}</h1>
-                  {isSelf && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                      👤 บัญชีโปรไฟล์ของคุณ
-                    </span>
-                  )}
                   {companion.is_verified ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                       <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
@@ -316,34 +308,13 @@ export default function CompanionDetailPage({ params }: PageProps) {
 
             {role === 'customer' || (!currentUser && !isCompanionOrAdmin) ? (
               <div className="pt-2 space-y-2.5">
-                {isSelf && (
-                  <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <UserCheck className="w-4 h-4 text-blue-600 shrink-0" />
-                      <span>โปรไฟล์ผู้ช่วยของคุณ</span>
-                    </div>
-                    <p className="text-[11px] text-blue-700 leading-relaxed">
-                      คุณกำลังอยู่ในบทบาทลูกค้า สามารถกดจองโปรไฟล์ผู้ช่วยของคุณเพื่อทดสอบระบบได้
-                    </p>
-                  </div>
-                )}
-
                 <Link
                   href={`/bookings/new?companion_id=${companion.id}`}
                   className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-lg shadow-blue-600/25"
                 >
                   <Calendar className="w-4 h-4" />
-                  <span>{isSelf ? 'จองผู้ช่วยท่านนี้ (โปรไฟล์ของคุณ)' : 'จองผู้ช่วยท่านนี้'}</span>
+                  <span>จองผู้ช่วยท่านนี้</span>
                 </Link>
-
-                {isSelf && (
-                  <Link
-                    href="/companion/profile"
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition text-xs"
-                  >
-                    <span>แก้ไขข้อมูลโปรไฟล์ผู้ช่วยนี้</span>
-                  </Link>
-                )}
 
                 {companionPhone && (
                   <a
@@ -354,25 +325,6 @@ export default function CompanionDetailPage({ params }: PageProps) {
                     <span>โทรสอบถามผู้ช่วย: {companionPhone}</span>
                   </a>
                 )}
-              </div>
-            ) : isSelf ? (
-              <div className="pt-2 space-y-3">
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>โปรไฟล์ของคุณ</span>
-                  </div>
-                  <p className="text-[11px] text-amber-700 leading-relaxed">
-                    นี่คือโปรไฟล์ผู้ร่วมเดินทางของคุณเอง คุณสามารถจัดการข้อมูลและเอกสารได้ที่หน้าแก้ไขโปรไฟล์ หรือสลับเป็นบทบาทลูกค้าหากต้องการจองผู้ช่วย
-                  </p>
-                </div>
-
-                <Link
-                  href="/companion/profile"
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition text-xs shadow-xs"
-                >
-                  <span>แก้ไขข้อมูลโปรไฟล์ผู้ช่วยนี้</span>
-                </Link>
               </div>
             ) : isCompanionOrAdmin ? (
               <div className="pt-2 space-y-2.5">

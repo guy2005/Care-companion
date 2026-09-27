@@ -369,16 +369,11 @@ export default function CompanionDashboardPage() {
               const customer = allProfiles.find((p) => p.id === booking.customer_id) || INITIAL_PROFILES[booking.customer_id];
               const category = categories.find((c) => c.id === booking.service_category_id);
               const isDirect = booking.companion_id === currentUser.id;
-              const isSelf = Boolean(currentUser && booking.customer_id === currentUser.id);
 
               return (
                 <div
                   key={booking.id}
-                  className={`p-6 rounded-3xl border transition space-y-4 ${
-                    isSelf 
-                      ? 'bg-amber-50/20 border-amber-200/90 shadow-2xs' 
-                      : 'bg-white border-slate-200/80 shadow-xs hover:shadow-md'
-                  }`}
+                  className="p-6 rounded-3xl border transition space-y-4 bg-white border-slate-200/80 shadow-xs hover:shadow-md"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                     <div>
@@ -387,11 +382,6 @@ export default function CompanionDashboardPage() {
                         {category && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             {category.name}
-                          </span>
-                        )}
-                        {isSelf && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
-                            👤 คำขอของคุณเอง
                           </span>
                         )}
                         {isDirect ? (
@@ -405,7 +395,7 @@ export default function CompanionDashboardPage() {
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        ผู้จอง: {customer?.full_name || 'ลูกค้า Care Companion'} {isSelf ? '(คุณ)' : ''} • เบอร์โทร: {booking.customer_phone || customer?.phone || 'ยังไม่ได้ระบุ'}
+                        ผู้จอง: {customer?.full_name || 'ลูกค้า Care Companion'} • เบอร์โทร: {booking.customer_phone || customer?.phone || 'ยังไม่ได้ระบุ'}
                       </p>
                     </div>
                     <div className="text-right">
@@ -415,16 +405,6 @@ export default function CompanionDashboardPage() {
                       </p>
                     </div>
                   </div>
-
-                  {isSelf && (
-                    <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-start sm:items-center gap-2">
-                      <User className="w-4 h-4 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
-                      <div>
-                        <span className="font-bold">คำขอนี้มาจากบทบาทลูกค้าของคุณเอง:</span>{' '}
-                        <span>คุณสามารถกดตอบรับงานนี้เพื่อทดสอบขั้นตอนการให้บริการได้</span>
-                      </div>
-                    </div>
-                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <div>
@@ -757,7 +737,6 @@ export default function CompanionDashboardPage() {
         const b = selectedBookingDetails;
         const bCustomer = allProfiles.find((p) => p.id === b.customer_id) || INITIAL_PROFILES[b.customer_id];
         const bCategory = categories.find((c) => c.id === b.service_category_id);
-        const isSelf = Boolean(currentUser && b.customer_id === currentUser.id);
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
