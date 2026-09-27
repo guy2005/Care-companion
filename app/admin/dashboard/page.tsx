@@ -329,10 +329,9 @@ export default function AdminDashboardPage() {
                       <Image
                         src={
                           companion.avatar_url ||
-                          profile?.avatar_url ||
                           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80'
                         }
-                        alt={profile?.full_name || 'Companion'}
+                        alt={companion.display_name || profile?.full_name || 'Companion'}
                         width={56}
                         height={56}
                         className="w-14 h-14 rounded-2xl object-cover ring-1 ring-slate-200 shrink-0"
@@ -340,7 +339,7 @@ export default function AdminDashboardPage() {
                       />
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-slate-900">{profile?.full_name || 'ผู้ร่วมเดินทาง'}</h4>
+                          <h4 className="text-sm font-bold text-slate-900">{companion.display_name || profile?.full_name || 'ผู้ร่วมเดินทาง'}</h4>
                           {companion.is_verified ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                               <ShieldCheck className="w-3 h-3 text-emerald-600" />
@@ -605,7 +604,7 @@ export default function AdminDashboardPage() {
                   ตรวจสอบเอกสารยืนยันตัวตนและประสบการณ์ (4 รายการ)
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {allProfiles.find((p) => p.id === inspectingCompanion.id)?.full_name || 'ผู้ร่วมเดินทาง'} (รหัส: #{inspectingCompanion.id.slice(-6).toUpperCase()})
+                  {inspectingCompanion.display_name || allProfiles.find((p) => p.id === inspectingCompanion.id)?.full_name || 'ผู้ร่วมเดินทาง'} (รหัส: #{inspectingCompanion.id.slice(-6).toUpperCase()})
                 </p>
               </div>
               <button

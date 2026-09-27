@@ -33,6 +33,7 @@ export interface CompanionProfile {
   experience_doc_1_url?: string;
   experience_doc_2_url?: string;
   avatar_url?: string;
+  display_name?: string;
   is_available: boolean;
   rating_avg: number;
   rating_count: number;

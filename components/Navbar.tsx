@@ -30,8 +30,12 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
-  const navAvatar = (role === 'companion' && currentCompanionProfile?.avatar_url)
-    ? currentCompanionProfile.avatar_url
+  const navName = (role === 'companion' && currentCompanionProfile?.display_name)
+    ? currentCompanionProfile.display_name
+    : (currentUser?.full_name || '');
+
+  const navAvatar = role === 'companion'
+    ? currentCompanionProfile?.avatar_url
     : currentUser?.avatar_url;
 
   const handleRoleSwitch = async (newRole: UserRole) => {
@@ -308,7 +312,7 @@ export default function Navbar() {
                     {navAvatar ? (
                       <Image
                         src={navAvatar}
-                        alt={currentUser.full_name}
+                        alt={navName}
                         width={28}
                         height={28}
                         className="w-7 h-7 rounded-full object-cover ring-1 ring-white"
@@ -316,12 +320,12 @@ export default function Navbar() {
                       />
                     ) : (
                       <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-                        {currentUser.full_name.charAt(0)}
+                        {(navName || 'U').charAt(0)}
                       </div>
                     )}
                     <div className="text-left text-xs">
                       <div className="font-semibold text-slate-800 leading-tight">
-                        {currentUser.full_name}
+                        {navName}
                       </div>
                       <span
                         className={`inline-block px-1.5 py-0.2 rounded-sm text-[10px] font-semibold border ${currentRoleInfo.badge}`}
@@ -419,7 +423,7 @@ export default function Navbar() {
                 {navAvatar ? (
                   <Image
                     src={navAvatar}
-                    alt={currentUser.full_name}
+                    alt={navName}
                     width={40}
                     height={40}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-white shrink-0"
@@ -427,12 +431,12 @@ export default function Navbar() {
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                    {currentUser.full_name.charAt(0)}
+                    {(navName || 'U').charAt(0)}
                   </div>
                 )}
                 <div className="min-w-0">
                   <div className="font-bold text-sm text-slate-900 truncate">
-                    {currentUser.full_name}
+                    {navName}
                   </div>
                   <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold border mt-0.5 ${currentRoleInfo.badge}`}>
                     {currentRoleInfo.label}

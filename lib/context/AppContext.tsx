@@ -26,7 +26,7 @@ interface AppContextType {
   acceptBooking: (bookingId: string, companionId: string) => Promise<void>;
   addReview: (review: Omit<Review, 'id' | 'created_at'>) => Promise<void>;
   toggleCompanionVerification: (companionId: string) => Promise<void>;
-  updateCompanionProfile: (companionId: string, data: Partial<CompanionProfile>, phone?: string, fullName?: string) => Promise<void>;
+  updateCompanionProfile: (companionId: string, data: Partial<CompanionProfile>, phone?: string) => Promise<void>;
   updateUserProfile: (data: Partial<Profile>) => Promise<void>;
   uploadAvatar: (file: File, folder: 'customers' | 'companions') => Promise<string | null>;
   toggleCompanionAvailability: (companionId: string) => Promise<void>;
@@ -103,7 +103,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             experience_years: Number(c.experience_years) || 0,
             rating_avg: Number(c.rating_avg) || 5.0,
             rating_count: Number(c.rating_count) || 0,
-            avatar_url: c.avatar_url || joinedProfile?.avatar_url || fallbackProfile?.avatar_url,
+            display_name: c.display_name || joinedProfile?.full_name || fallbackProfile?.full_name || 'ผู้ร่วมเดินทาง',
+            avatar_url: c.avatar_url || undefined,
             id_card_url: c.id_card_url || c.verification_doc_url || undefined,
             driver_license_url: c.driver_license_url || undefined,
             experience_doc_1_url: c.experience_doc_1_url || undefined,
@@ -145,12 +146,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               item = {
                 ...item,
                 ...compProfilesMap[m.id],
+                display_name: compProfilesMap[m.id].display_name || item.display_name,
+                avatar_url: compProfilesMap[m.id].avatar_url || item.avatar_url,
                 profile: item.profile
                   ? {
                       ...item.profile,
                       ...(compProfilesMap[m.id].phone ? { phone: compProfilesMap[m.id].phone } : {}),
-                      ...(compProfilesMap[m.id].full_name ? { full_name: compProfilesMap[m.id].full_name } : {}),
-                      ...(compProfilesMap[m.id].avatar_url ? { avatar_url: compProfilesMap[m.id].avatar_url } : {}),
                     }
                   : item.profile,
               };
@@ -744,26 +745,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateCompanionProfile = async (
     companionId: string,
     data: Partial<CompanionProfile>,
-    phone?: string,
-    fullName?: string
+    phone?: string
   ) => {
     const existingComp = companions.find((c) => c.id === companionId);
 
     setCompanions((prev) =>
       prev.map((c) => {
         if (c.id === companionId) {
-          const updatedProfile = c.profile
-            ? { 
-                ...c.profile, 
-                ...(phone !== undefined ? { phone } : {}),
-                ...(fullName !== undefined ? { full_name: fullName } : {}),
-                ...(data.avatar_url ? { avatar_url: data.avatar_url } : {}),
-              }
-            : c.profile;
           return {
             ...c,
             ...data,
-            profile: updatedProfile,
+            display_name: data.display_name !== undefined ? data.display_name : c.display_name,
+            avatar_url: data.avatar_url !== undefined ? data.avatar_url : c.avatar_url,
+            profile: c.profile
+              ? {
+                  ...c.profile,
+                  ...(phone !== undefined ? { phone } : {}),
+                }
+              : c.profile,
             updated_at: new Date().toISOString(),
           };
         }
@@ -771,18 +770,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
     );
 
-    const profileUpdates: Partial<Profile> = {};
-    if (phone !== undefined) profileUpdates.phone = phone;
-    if (fullName !== undefined) profileUpdates.full_name = fullName;
-
-    if (Object.keys(profileUpdates).length > 0) {
-      setCurrentUser((prev) => (prev && prev.id === companionId ? { ...prev, ...profileUpdates } : prev));
+    // Only update phone if explicitly passed (NEVER touch customer full_name or avatar_url)
+    if (phone !== undefined) {
+      setCurrentUser((prev) => (prev && prev.id === companionId ? { ...prev, phone } : prev));
       setAllProfiles((prev) =>
-        prev.map((p) => (p.id === companionId ? { ...p, ...profileUpdates, updated_at: new Date().toISOString() } : p))
+        prev.map((p) => (p.id === companionId ? { ...p, phone, updated_at: new Date().toISOString() } : p))
       );
     }
 
-    // Save mock override in localStorage for demo mode
+    // Save mock companion override in localStorage for demo mode
     if (!isUuid(companionId) && typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('care_companion_mock_companion_profiles');
@@ -790,7 +786,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         compMap[companionId] = {
           ...(compMap[companionId] || {}),
           ...data,
-          ...profileUpdates,
+          ...(phone !== undefined ? { phone } : {}),
         };
         localStorage.setItem('care_companion_mock_companion_profiles', JSON.stringify(compMap));
       } catch (e) {
@@ -815,6 +811,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const upsertPayload: any = {
         id: companionId,
+        display_name: data.display_name ?? existingComp?.display_name ?? null,
+        avatar_url: data.avatar_url ?? existingComp?.avatar_url ?? null,
         bio: data.bio ?? (existingComp?.bio || ''),
         experience_years: data.experience_years ?? (existingComp?.experience_years || 0),
         skills: data.skills ?? (existingComp?.skills || []),
@@ -822,7 +820,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         hourly_rate: data.hourly_rate ?? (existingComp?.hourly_rate || 250),
         is_verified: isVerifiedVal,
         is_available: isAvailableVal,
-        avatar_url: data.avatar_url ?? existingComp?.avatar_url ?? null,
         verification_doc_url: data.id_card_url ?? data.verification_doc_url ?? existingComp?.verification_doc_url ?? null,
         id_card_url: data.id_card_url ?? existingComp?.id_card_url ?? null,
         driver_license_url: data.driver_license_url ?? existingComp?.driver_license_url ?? null,
@@ -834,7 +831,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.from('companion_profiles').upsert(upsertPayload);
       if (error) {
         // If error occurred (e.g. columns not yet added via SQL migration), fallback without extra columns
-        console.warn('Upsert with separate doc/avatar columns failed, falling back:', error.message);
+        console.warn('Upsert with separate display_name/avatar columns failed, falling back:', error.message);
+        delete upsertPayload.display_name;
         delete upsertPayload.avatar_url;
         delete upsertPayload.id_card_url;
         delete upsertPayload.driver_license_url;
@@ -846,16 +844,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (Object.keys(profileUpdates).length > 0) {
+      if (phone !== undefined) {
         const { error: profErr } = await supabase
           .from('profiles')
           .update({
-            ...profileUpdates,
+            phone: phone.trim(),
             updated_at: new Date().toISOString(),
           })
           .eq('id', companionId);
         if (profErr) {
-          console.error('Supabase update profile error:', profErr.message);
+          console.error('Supabase update profile phone error:', profErr.message);
         }
       }
     }

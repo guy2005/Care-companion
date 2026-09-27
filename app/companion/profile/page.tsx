@@ -62,14 +62,14 @@ export default function CompanionProfilePage() {
 
   const [phone, setPhone] = useState(userDetails?.phone ? formatPhoneNumber(userDetails.phone) : '');
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [fullName, setFullName] = useState(userDetails?.full_name || '');
-  const [fullNameError, setFullNameError] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState(companion.display_name || companion.profile?.full_name || userDetails?.full_name || '');
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
 
   // Companion Avatar State (Stored in avatars/companions/)
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string>(companion.avatar_url || userDetails?.avatar_url || '');
+  const [avatarUrl, setAvatarUrl] = useState<string>(companion.avatar_url || '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(companion.avatar_url || userDetails?.avatar_url || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(companion.avatar_url || null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
   const [bio, setBio] = useState(companion.bio || '');
@@ -128,6 +128,11 @@ export default function CompanionProfilePage() {
       setHourlyRate(active.hourly_rate ?? 250);
       setSkills(active.skills || []);
       setServiceAreas(active.service_areas || []);
+      if (active.display_name) {
+        setDisplayName(active.display_name);
+      } else if (currentProf?.full_name && !displayName) {
+        setDisplayName(currentProf.full_name);
+      }
       if (active.avatar_url) {
         setAvatarUrl(active.avatar_url);
         if (!avatarFile) setAvatarPreview(active.avatar_url);
@@ -145,15 +150,8 @@ export default function CompanionProfilePage() {
         setExpDoc2Url(active.experience_doc_2_url);
       }
     }
-    if (currentProf?.full_name) {
-      setFullName(currentProf.full_name);
-    }
     if (currentProf?.phone) {
       setPhone(formatPhoneNumber(currentProf.phone));
-    }
-    if (!active?.avatar_url && currentProf?.avatar_url && !avatarFile) {
-      setAvatarUrl(currentProf.avatar_url);
-      setAvatarPreview(currentProf.avatar_url);
     }
   }, [companions, allProfiles, currentUser]);
 
@@ -428,12 +426,12 @@ export default function CompanionProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate full name
-    if (!fullName.trim()) {
-      setFullNameError('กรุณาระบุชื่อ-นามสกุล หรือชื่อที่ใช้ให้บริการ');
+    // Validate display name
+    if (!displayName.trim()) {
+      setDisplayNameError('กรุณาระบุชื่อ-นามสกุล หรือชื่อที่ใช้ให้บริการ');
       return;
     }
-    setFullNameError(null);
+    setDisplayNameError(null);
 
     // Strict validation: must be 10 digits and 2 dashes (12 characters total, e.g. 086-555-1234)
     if (!isValidPhoneNumber(phone)) {
@@ -584,6 +582,7 @@ export default function CompanionProfilePage() {
           hourly_rate: hourlyRate,
           skills,
           service_areas: serviceAreas,
+          display_name: displayName.trim(),
           avatar_url: finalAvatarUrl || undefined,
           id_card_url: finalIdCardUrl || undefined,
           driver_license_url: finalDriverLicenseUrl || undefined,
@@ -593,8 +592,7 @@ export default function CompanionProfilePage() {
           // When a new document is submitted, mark as pending verification for admin inspection
           ...(hasNewDocs ? { is_verified: false } : {}),
         },
-        phone.trim(),
-        fullName.trim()
+        phone.trim()
       );
 
       setAvatarFile(null);
@@ -667,7 +665,7 @@ export default function CompanionProfilePage() {
                 {avatarPreview ? (
                   <img
                     src={avatarPreview}
-                    alt={fullName || 'Companion'}
+                    alt={displayName || 'Companion'}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -704,7 +702,7 @@ export default function CompanionProfilePage() {
                     <span>รูปและชื่อผู้ร่วมเดินทาง (Companion Identity)</span>
                   </h3>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    รูปภาพนี้จัดเก็บแยกในโฟลเดอร์ <code className="bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded font-mono text-[10px]">avatars/companions/</code> สำหรับงานผู้ร่วมเดินทางโดยเฉพาะ
+                    รูปภาพและชื่อนี้จะใช้แสดงในบทบาทผู้ร่วมเดินทางเท่านั้น แยกต่างหากจากบัญชีลูกค้า (เก็บที่ <code className="bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded font-mono text-[10px]">avatars/companions/</code>)
                   </p>
                 </div>
                 {companion.is_verified ? (
@@ -728,27 +726,27 @@ export default function CompanionProfilePage() {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Full Name / Display Name */}
+                {/* Companion Display Name */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                    <span>ชื่อ-นามสกุล / ชื่อเรียกที่ใช้ให้บริการ</span>
+                    <span>ชื่อที่ใช้ให้บริการ (Companion Name)</span>
                     <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={fullName}
+                    value={displayName}
                     onChange={(e) => {
-                      setFullName(e.target.value);
-                      if (fullNameError) setFullNameError(null);
+                      setDisplayName(e.target.value);
+                      if (displayNameError) setDisplayNameError(null);
                     }}
                     placeholder="เช่น คุณปรียา รักดูแล (ครูปรียา)"
                     required
                     className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 transition ${
-                      fullNameError ? 'border-rose-400 ring-2 ring-rose-400/20' : 'border-slate-200 focus:ring-emerald-500'
+                      displayNameError ? 'border-rose-400 ring-2 ring-rose-400/20' : 'border-slate-200 focus:ring-emerald-500'
                     }`}
                   />
-                  {fullNameError && (
-                    <p className="text-[11px] text-rose-500 font-semibold">{fullNameError}</p>
+                  {displayNameError && (
+                    <p className="text-[11px] text-rose-500 font-semibold">{displayNameError}</p>
                   )}
                 </div>
 

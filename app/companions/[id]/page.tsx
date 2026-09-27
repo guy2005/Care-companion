@@ -35,6 +35,8 @@ export default function CompanionDetailPage({ params }: PageProps) {
 
   const companion = companions.find((c) => c.id === resolvedParams.id);
   const profile = allProfiles.find((p) => p.id === resolvedParams.id) || companion?.profile || INITIAL_PROFILES[resolvedParams.id];
+  const companionName = companion?.display_name || profile?.full_name || 'ผู้ร่วมเดินทาง';
+  const companionAvatar = companion?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80';
   const companionReviews = reviews.filter((r) => r.companion_id === resolvedParams.id);
   const isSelf = Boolean(currentUser && currentUser.id === resolvedParams.id);
   const isCompanionOrAdmin = currentUser && (role === 'companion' || role === 'admin');
@@ -76,12 +78,8 @@ export default function CompanionDetailPage({ params }: PageProps) {
             <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
               <div className="relative">
                 <Image
-                  src={
-                    companion.avatar_url ||
-                    profile.avatar_url ||
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80'
-                  }
-                  alt={profile.full_name}
+                  src={companionAvatar}
+                  alt={companionName}
                   width={96}
                   height={96}
                   className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover ring-4 ring-blue-50 shadow-md"
@@ -99,7 +97,7 @@ export default function CompanionDetailPage({ params }: PageProps) {
 
               <div className="space-y-2 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-black text-slate-900">{profile.full_name}</h1>
+                  <h1 className="text-2xl font-black text-slate-900">{companionName}</h1>
                   {isSelf && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
                       👤 บัญชีโปรไฟล์ของคุณ

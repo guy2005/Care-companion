@@ -768,10 +768,11 @@ function BookingForm() {
                 .filter((c) => c.is_verified)
                 .map((c) => {
                   const p = allProfiles.find((prof) => prof.id === c.id) || INITIAL_PROFILES[c.id] || c.profile;
+                  const cName = c.display_name || p?.full_name || 'ผู้ช่วย';
                   const isSelf = Boolean(currentUser && c.id === currentUser.id);
                   return (
                     <option key={c.id} value={c.id} disabled={isSelf}>
-                      👤 {p?.full_name || 'ผู้ช่วย'} - ฿{c.hourly_rate}/ชม. (⭐ {c.rating_avg.toFixed(1)})
+                      👤 {cName} - ฿{c.hourly_rate}/ชม. (⭐ {c.rating_avg.toFixed(1)})
                       {isSelf ? ' 🚫 (บัญชีของคุณ - ไม่สามารถจ้างตัวเองได้)' : ''}
                     </option>
                   );
@@ -786,10 +787,11 @@ function BookingForm() {
               </div>
             ) : selectedCompanion && (() => {
               const p = allProfiles.find((prof) => prof.id === selectedCompanion.id) || INITIAL_PROFILES[selectedCompanion.id] || selectedCompanion.profile;
+              const selName = selectedCompanion.display_name || p?.full_name || 'ผู้ช่วย';
               return (
                 <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-slate-800">ผู้ช่วยที่เลือก: {p?.full_name}</span>
+                    <span className="font-bold text-slate-800">ผู้ช่วยที่เลือก: {selName}</span>
                     {p?.phone && (
                       <span className="inline-flex items-center gap-1 text-emerald-800 font-semibold bg-white px-2 py-0.5 rounded-lg border border-emerald-200">
                         <Phone className="w-3.5 h-3.5 text-emerald-600" />

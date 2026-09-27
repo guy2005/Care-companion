@@ -38,6 +38,7 @@ export default function CustomerDashboardPage() {
     role, 
     switchRole, 
     bookings, 
+    companions,
     allProfiles, 
     updateBookingStatus, 
     addReview, 
@@ -300,9 +301,11 @@ export default function CustomerDashboardPage() {
       <div className="space-y-4">
         {(activeTab === 'active' ? activeBookings : historyBookings).length > 0 ? (
           (activeTab === 'active' ? activeBookings : historyBookings).map((booking) => {
+            const compData = companions.find((c) => c.id === booking.companion_id);
             const companionProfile = booking.companion_id
-              ? allProfiles.find((p) => p.id === booking.companion_id) || INITIAL_PROFILES[booking.companion_id]
+              ? allProfiles.find((p) => p.id === booking.companion_id) || INITIAL_PROFILES[booking.companion_id] || compData?.profile
               : null;
+            const companionDisplayName = compData?.display_name || companionProfile?.full_name || 'ผู้ร่วมเดินทาง';
             const hasReviewed = reviews.some((r) => r.booking_id === booking.id);
 
             return (
@@ -358,7 +361,7 @@ export default function CustomerDashboardPage() {
                     </div>
                     <p className="text-slate-900 font-semibold">
                       {companionProfile ? (
-                        <span>🤝 {companionProfile.full_name}</span>
+                        <span>🤝 {companionDisplayName}</span>
                       ) : (
                         <span className="text-amber-600">📢 รอผู้ช่วยในพื้นที่กดรับงาน</span>
                       )}

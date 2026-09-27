@@ -111,6 +111,8 @@ export default function CompanionDashboardPage() {
     profile: currentUser,
   };
   const userDetails = allProfiles.find((p) => p.id === currentUser.id) || currentUser;
+  const companionDisplayName = companionProfile?.display_name || userDetails?.full_name || 'ผู้ร่วมเดินทาง';
+  const companionAvatar = companionProfile?.avatar_url;
 
   // Filter Bookings
   // 1. Requests: Pending jobs directed to this companion OR open jobs (companion_id is null)
@@ -238,10 +240,10 @@ export default function CompanionDashboardPage() {
       {/* Companion Stats & Status Banner */}
       <div className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
-          {companionProfile?.avatar_url || userDetails?.avatar_url ? (
+          {companionAvatar ? (
             <Image
-              src={companionProfile?.avatar_url || userDetails?.avatar_url || ''}
-              alt={userDetails?.full_name || 'Companion'}
+              src={companionAvatar}
+              alt={companionDisplayName}
               width={64}
               height={64}
               className="w-16 h-16 rounded-2xl object-cover ring-2 ring-emerald-100 shadow-md shadow-emerald-500/10 shrink-0"
@@ -249,12 +251,12 @@ export default function CompanionDashboardPage() {
             />
           ) : (
             <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-emerald-500/20 shrink-0">
-              {userDetails?.full_name ? userDetails.full_name.charAt(0) : 'ป'}
+              {companionDisplayName.charAt(0)}
             </div>
           )}
           <div>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900">{userDetails?.full_name}</h1>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900">{companionDisplayName}</h1>
               {companionProfile.is_verified ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
