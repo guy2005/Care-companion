@@ -492,11 +492,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const createBooking = async (newBookingData: Omit<Booking, 'id' | 'created_at' | 'status'>): Promise<Booking> => {
-    // Prevent hiring oneself
-    if (newBookingData.companion_id && (newBookingData.companion_id === newBookingData.customer_id || (currentUser && newBookingData.companion_id === currentUser.id))) {
-      throw new Error('ไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้ กรุณาเลือกผู้ช่วยท่านอื่น');
-    }
-
     // If customer provided a phone number, update their profile so the system remembers it
     if (newBookingData.customer_phone) {
       const phoneVal = newBookingData.customer_phone;
@@ -586,12 +581,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const acceptBooking = async (bookingId: string, companionId: string) => {
-    const targetBooking = bookings.find((b) => b.id === bookingId);
-    if (targetBooking && (targetBooking.customer_id === companionId || (currentUser && targetBooking.customer_id === currentUser.id))) {
-      console.warn('Cannot accept booking where customer is yourself');
-      throw new Error('ไม่สามารถตอบรับงานที่ตนเองเป็นผู้ว่าจ้างได้');
-    }
-
     const activeComp = companions.find((c) => c.id === companionId || c.id === currentUser?.id);
     if (activeComp && !activeComp.is_verified) {
       console.warn('Companion is not verified by admin');

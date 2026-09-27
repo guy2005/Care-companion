@@ -179,11 +179,6 @@ function BookingForm() {
       return;
     }
 
-    if (isSelfSelected) {
-      setError('คุณไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้ กรุณาเลือกผู้ช่วยท่านอื่น หรือเปิดรับคำขอทั่วไป');
-      return;
-    }
-
     if (!title.trim() || !origin.trim() || !destination.trim() || !scheduledDate || !scheduledTime) {
       setError('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (หัวข้อธุระ, จุดรับต้นทาง, ปลายทาง, วันที่ และเวลา)');
       return;
@@ -771,21 +766,14 @@ function BookingForm() {
                   const cName = c.display_name || p?.full_name || 'ผู้ช่วย';
                   const isSelf = Boolean(currentUser && c.id === currentUser.id);
                   return (
-                    <option key={c.id} value={c.id} disabled={isSelf}>
+                    <option key={c.id} value={c.id}>
                       👤 {cName} - ฿{c.hourly_rate}/ชม. (⭐ {c.rating_avg.toFixed(1)})
-                      {isSelf ? ' 🚫 (บัญชีของคุณ - ไม่สามารถจ้างตัวเองได้)' : ''}
+                      {isSelf ? ' (โปรไฟล์ผู้ช่วยของคุณ)' : ''}
                     </option>
                   );
                 })}
             </select>
-            {isSelfSelected ? (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs flex items-center gap-2 text-rose-800 mt-2">
-                <Ban className="w-4 h-4 text-rose-600 shrink-0" />
-                <span className="font-semibold">
-                  คุณไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้ กรุณาเลือกผู้ช่วยท่านอื่น หรือเลือกเปิดรับคำขอทั่วไป
-                </span>
-              </div>
-            ) : selectedCompanion && (() => {
+            {selectedCompanion && (() => {
               const p = allProfiles.find((prof) => prof.id === selectedCompanion.id) || INITIAL_PROFILES[selectedCompanion.id] || selectedCompanion.profile;
               const selName = selectedCompanion.display_name || p?.full_name || 'ผู้ช่วย';
               const selPhone = selectedCompanion.phone || p?.phone;
@@ -793,6 +781,11 @@ function BookingForm() {
                 <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-slate-800">ผู้ช่วยที่เลือก: {selName}</span>
+                    {isSelfSelected && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                        โปรไฟล์ผู้ช่วยของคุณ
+                      </span>
+                    )}
                     {selPhone && (
                       <span className="inline-flex items-center gap-1 text-emerald-800 font-semibold bg-white px-2 py-0.5 rounded-lg border border-emerald-200">
                         <Phone className="w-3.5 h-3.5 text-emerald-600" />
@@ -838,12 +831,10 @@ function BookingForm() {
 
             <button
               type={isCompanionOrAdmin ? 'button' : 'submit'}
-              disabled={isSubmitting || isSelfSelected || isCompanionOrAdmin}
+              disabled={isSubmitting || isCompanionOrAdmin}
               className={`w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl font-bold transition shadow-lg text-sm sm:text-base ${
                 isCompanionOrAdmin
                   ? 'bg-slate-300 text-slate-600 border border-slate-300 cursor-not-allowed shadow-none'
-                  : isSelfSelected
-                  ? 'bg-slate-400 text-white cursor-not-allowed shadow-none'
                   : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-blue-600/25 cursor-pointer disabled:opacity-50'
               }`}
               title={
@@ -856,11 +847,6 @@ function BookingForm() {
                 <>
                   <Ban className="w-4 h-4 text-slate-500" />
                   <span>ไม่สามารถส่งคำขอได้ (โหมดดูตัวอย่างสำหรับ {role === 'companion' ? 'Companion' : 'Admin'})</span>
-                </>
-              ) : isSelfSelected ? (
-                <>
-                  <Ban className="w-4 h-4" />
-                  <span>ไม่สามารถจ้างตัวเองได้ (กรุณาเปลี่ยนผู้ช่วย)</span>
                 </>
               ) : isSubmitting ? (
                 <span>กำลังส่งคำขอ...</span>

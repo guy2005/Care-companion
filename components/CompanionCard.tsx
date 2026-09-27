@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { CompanionProfile } from '@/lib/types';
 import { useApp } from '@/lib/context/AppContext';
 import { INITIAL_PROFILES } from '@/lib/mockData';
-import { Star, ShieldCheck, MapPin, Clock, ArrowRight, CheckCircle, Phone, Ban } from 'lucide-react';
+import { Star, ShieldCheck, MapPin, Clock, ArrowRight, CheckCircle, Phone } from 'lucide-react';
 
 interface CompanionCardProps {
   companion: CompanionProfile;
@@ -138,30 +138,12 @@ export default function CompanionCard({ companion }: CompanionCardProps) {
             <span>{isSelf ? 'ดูประวัติของคุณ' : 'ดูประวัติ'}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-slate-500" />
           </Link>
-        ) : isSelf ? (
-          <div className="flex gap-2">
-            <Link
-              href={`/companions/${companion.id}`}
-              className="flex-1 min-h-[44px] flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
-            >
-              <span>ดูโปรไฟล์</span>
-            </Link>
-            <button
-              disabled
-              type="button"
-              title="คุณไม่สามารถจ้างตัวเองเป็นผู้ร่วมเดินทางได้"
-              className="flex-1 min-h-[44px] flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-[11px] font-bold text-slate-400 bg-slate-50 border border-slate-200 cursor-not-allowed"
-            >
-              <Ban className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>ไม่สามารถจ้างตัวเอง</span>
-            </button>
-          </div>
         ) : (
           <Link
             href={`/companions/${companion.id}`}
             className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-xs group-hover:bg-blue-700"
           >
-            <span>ดูประวัติและจองผู้ช่วยนี้</span>
+            <span>{isSelf ? 'ดูประวัติและจองผู้ช่วยนี้ (โปรไฟล์ของคุณ)' : 'ดูประวัติและจองผู้ช่วยนี้'}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         )}

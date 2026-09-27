@@ -136,20 +136,6 @@ export default function CompanionDashboardPage() {
 
 
   const handleAccept = (bookingId: string) => {
-    const targetBooking = bookings.find((b) => b.id === bookingId);
-    if (targetBooking && currentUser && targetBooking.customer_id === currentUser.id) {
-      setModalConfig({
-        isOpen: true,
-        title: 'ไม่สามารถรับงานของตนเองได้',
-        message: 'คุณเป็นผู้สร้างคำขอบริการนี้ในฐานะผู้ว่าจ้าง ระบบไม่อนุญาตให้ผู้ว่าจ้างกดตอบรับงานของตนเองครับ',
-        confirmText: 'เข้าใจแล้ว',
-        variant: 'warning',
-        isAlertOnly: true,
-        onConfirm: () => setModalConfig((prev) => ({ ...prev, isOpen: false })),
-      });
-      return;
-    }
-
     if (!companionProfile.is_verified) {
       setModalConfig({
         isOpen: true,
@@ -166,24 +152,6 @@ export default function CompanionDashboardPage() {
   };
 
   const handleDecline = (bookingId: string) => {
-    const targetBooking = bookings.find((b) => b.id === bookingId);
-    if (targetBooking && currentUser && targetBooking.customer_id === currentUser.id) {
-      setModalConfig({
-        isOpen: true,
-        title: 'คำขอนี้สร้างโดยตัวคุณเอง',
-        message: 'คุณเป็นผู้สร้างคำขอนี้ในฐานะผู้ว่าจ้าง หากต้องการยกเลิกคำขอ กรุณาไปยกเลิกที่หน้าแดชบอร์ดลูกค้าครับ',
-        confirmText: 'ไปยังหน้าลูกค้า',
-        cancelText: 'ปิด',
-        variant: 'warning',
-        isAlertOnly: false,
-        onConfirm: () => {
-          setModalConfig((prev) => ({ ...prev, isOpen: false }));
-          router.push('/customer/dashboard');
-        },
-      });
-      return;
-    }
-
     setModalConfig({
       isOpen: true,
       title: 'ยืนยันการปฏิเสธคำขอ',
@@ -449,11 +417,11 @@ export default function CompanionDashboardPage() {
                   </div>
 
                   {isSelf && (
-                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start sm:items-center gap-2.5">
-                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-start sm:items-center gap-2">
+                      <User className="w-4 h-4 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
                       <div>
-                        <span className="font-bold">คุณเป็นผู้สร้างคำขอนี้ในฐานะผู้ว่าจ้าง:</span>{' '}
-                        <span>ระบบไม่อนุญาตให้กดรับงานของตนเอง (คำขอนี้กำลังเปิดให้ผู้ร่วมเดินทางท่านอื่นในพื้นที่กดรับงาน)</span>
+                        <span className="font-bold">คำขอนี้มาจากบทบาทลูกค้าของคุณเอง:</span>{' '}
+                        <span>คุณสามารถกดตอบรับงานนี้เพื่อทดสอบขั้นตอนการให้บริการได้</span>
                       </div>
                     </div>
                   )}
@@ -548,54 +516,32 @@ export default function CompanionDashboardPage() {
                     </button>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      {isSelf ? (
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                          <Link
-                            href="/customer/dashboard"
-                            className="min-h-[44px] flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition text-center"
-                          >
-                            จัดการคำขอในหน้าแดชบอร์ดลูกค้า
-                          </Link>
-                          <button
-                            disabled
-                            type="button"
-                            className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
-                            title="คุณไม่สามารถตอบรับงานที่ตนเองเป็นผู้ว่าจ้างได้"
-                          >
-                            <Ban className="w-3.5 h-3.5 text-slate-400" />
-                            <span>ไม่สามารถรับงานของตนเองได้</span>
-                          </button>
-                        </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDecline(booking.id)}
+                        className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 active:scale-95 transition cursor-pointer"
+                      >
+                        ปฏิเสธ
+                      </button>
+                      {companionProfile.is_verified ? (
+                        <button
+                          type="button"
+                          onClick={() => handleAccept(booking.id)}
+                          className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>ตอบรับเป็นผู้ร่วมเดินทาง</span>
+                        </button>
                       ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleDecline(booking.id)}
-                            className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 active:scale-95 transition cursor-pointer"
-                          >
-                            ปฏิเสธ
-                          </button>
-                          {companionProfile.is_verified ? (
-                            <button
-                              type="button"
-                              onClick={() => handleAccept(booking.id)}
-                              className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>ตอบรับเป็นผู้ร่วมเดินทาง</span>
-                            </button>
-                          ) : (
-                            <button
-                              disabled
-                              type="button"
-                              className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
-                              title="ต้องได้รับการอนุมัติจากแอดมินก่อนจึงจะรับงานได้"
-                            >
-                              <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                              <span>รอแอดมินอนุมัติเข้างานก่อน</span>
-                            </button>
-                          )}
-                        </>
+                        <button
+                          disabled
+                          type="button"
+                          className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
+                          title="ต้องได้รับการอนุมัติจากแอดมินก่อนจึงจะรับงานได้"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                          <span>รอแอดมินอนุมัติเข้างานก่อน</span>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1045,7 +991,7 @@ export default function CompanionDashboardPage() {
                 </button>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  {b.status === 'pending' && !isSelf && (
+                  {b.status === 'pending' && (
                     <>
                       <button
                         type="button"

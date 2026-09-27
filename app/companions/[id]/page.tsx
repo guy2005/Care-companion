@@ -314,7 +314,48 @@ export default function CompanionDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {isSelf ? (
+            {role === 'customer' || (!currentUser && !isCompanionOrAdmin) ? (
+              <div className="pt-2 space-y-2.5">
+                {isSelf && (
+                  <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <UserCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span>โปรไฟล์ผู้ช่วยของคุณ</span>
+                    </div>
+                    <p className="text-[11px] text-blue-700 leading-relaxed">
+                      คุณกำลังอยู่ในบทบาทลูกค้า สามารถกดจองโปรไฟล์ผู้ช่วยของคุณเพื่อทดสอบระบบได้
+                    </p>
+                  </div>
+                )}
+
+                <Link
+                  href={`/bookings/new?companion_id=${companion.id}`}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition shadow-lg shadow-blue-600/25"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>{isSelf ? 'จองผู้ช่วยท่านนี้ (โปรไฟล์ของคุณ)' : 'จองผู้ช่วยท่านนี้'}</span>
+                </Link>
+
+                {isSelf && (
+                  <Link
+                    href="/companion/profile"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition text-xs"
+                  >
+                    <span>แก้ไขข้อมูลโปรไฟล์ผู้ช่วยนี้</span>
+                  </Link>
+                )}
+
+                {companionPhone && (
+                  <a
+                    href={`tel:${companionPhone}`}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition text-xs shadow-2xs"
+                  >
+                    <Phone className="w-4 h-4 text-emerald-600" />
+                    <span>โทรสอบถามผู้ช่วย: {companionPhone}</span>
+                  </a>
+                )}
+              </div>
+            ) : isSelf ? (
               <div className="pt-2 space-y-3">
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-amber-900">
@@ -322,7 +363,7 @@ export default function CompanionDetailPage({ params }: PageProps) {
                     <span>โปรไฟล์ของคุณ</span>
                   </div>
                   <p className="text-[11px] text-amber-700 leading-relaxed">
-                    นี่คือโปรไฟล์ผู้ร่วมเดินทางของคุณเอง คุณสามารถจัดการข้อมูลและเอกสารได้ที่หน้าแก้ไขโปรไฟล์
+                    นี่คือโปรไฟล์ผู้ร่วมเดินทางของคุณเอง คุณสามารถจัดการข้อมูลและเอกสารได้ที่หน้าแก้ไขโปรไฟล์ หรือสลับเป็นบทบาทลูกค้าหากต้องการจองผู้ช่วย
                   </p>
                 </div>
 
